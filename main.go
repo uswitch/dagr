@@ -16,8 +16,10 @@ var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Requir
 //var workingDir = kingpin.Flag("work", "working directory").Short('w').Required().String()
 //var dbFile = kingpin.Flag("db", "sqlite database file").Short('d').Required().String()
 
-type SomeVariables struct {
-	Answer int
+type Status struct {
+	Succeeded int
+	Retryable int
+	Failed    int
 }
 
 func indexHandler(w http.ResponseWriter, req *http.Request) {
@@ -25,7 +27,7 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.NotFound(w, req)
 	}
-	if err = t.Execute(w, SomeVariables{42}); err != nil {
+	if err = t.Execute(w, Status{77, 13, 12}); err != nil {
 		http.NotFound(w, req)
 	}
 }
