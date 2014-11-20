@@ -18,8 +18,8 @@ type Status struct {
 }
 
 // does the given directory contain a 'main' file?
-func IsProgram(path string) bool {
-	_, err := os.Stat(filepath.Join(path, "main"))
+func IsProgram(parentDir, dir string) bool {
+	_, err := os.Stat(filepath.Join(parentDir, dir, "main"))
 	return err == nil
 }
 
@@ -32,7 +32,7 @@ func ReadDir(dir string) ([]*Program, error) {
 	}
 
 	for _, info := range infos {
-		if err == nil && info.IsDir() && IsProgram(filepath.Join(dir, info.Name())) {
+		if err == nil && info.IsDir() && IsProgram(dir, info.Name()) {
 			programs = append(programs, &Program{info.Name()})
 		}
 	}

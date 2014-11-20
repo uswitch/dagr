@@ -1,6 +1,7 @@
 package git
 
 import (
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,14 @@ func Clone(repo, workingDir string) error {
 
 func Pull(workingDir string) error {
 	return exec.Command("git", "-C", workingDir, "pull").Run()
+}
+
+func MasterSha(workingDir string) (string, error) {
+	bytes, err := ioutil.ReadFile(filepath.Join(workingDir, ".git", "refs", "heads", "master"))
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 // performs Clone or Pull as necessary
