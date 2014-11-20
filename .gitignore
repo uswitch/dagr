@@ -2,6 +2,9 @@
 *.o
 *.a
 *.so
+dagr
+dagr-dev
+
 
 # Folders
 _obj
