@@ -3,9 +3,14 @@ dagr
 
 runs programs every day (in Norse mythology, Dagr is day personified)
 
+## prerequisites
+
+* Go
+
 ## installation
 
 Install dagr
+
     go get -u github.com/uswitch/dagr
 
 Install resource packaging tool
