@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 )
@@ -15,8 +16,8 @@ var TMPL = regexp.MustCompile(".tmpl$")
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
 var workingDir = kingpin.Flag("work", "working directory").Short('w').Required().String()
+var programsRepo = kingpin.Flag("repo", "repository containing programs").Short('r').Required().String()
 
-//var programsRepo = kingpin.Flag("repo", "repository containing programs").Short('r').Required().String()
 //var dbFile = kingpin.Flag("db", "sqlite database file").Short('d').Required().String()
 
 type Program struct {
@@ -34,6 +35,20 @@ type Status struct {
 func isDagrProgram(path string) bool {
 	_, err := os.Stat(filepath.Join(path, "main"))
 	return err == nil
+}
+
+// does the given directory contain a '.git' directory?
+func isGitRepo(path string) bool {
+	_, err := os.Stat(filepath.Join(path, ".git"))
+	return err == nil
+}
+
+func clone(repo, workingDir string) error {
+	return exec.Command("git", "clone", repo, workingDir).Run()
+}
+
+func pull(workingDir string) error {
+	return exec.Command("git", "-C", workingDir, "pull").Run()
 }
 
 func readPrograms(dir string) ([]*Program, error) {
@@ -66,6 +81,18 @@ func handleIndex(programs []*Program) func(http.ResponseWriter, *http.Request) {
 
 func main() {
 	kingpin.Parse()
+
+	if !isGitRepo(*workingDir) {
+		err := clone(*programsRepo, *workingDir)
+		if err != nil {
+			log.Fatal("clone failed: ", err)
+		}
+	} else {
+		err := pull(*workingDir)
+		if err != nil {
+			log.Fatal("pull failed: ", err)
+		}
+	}
 
 	programs, err := readPrograms(*workingDir)
 
