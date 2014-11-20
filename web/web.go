@@ -2,7 +2,9 @@ package web
 
 import (
 	"bitbucket.org/tebeka/nrsc"
+	"log"
 	"github.com/uswitch/dagr/program"
+	"github.com/gorilla/mux"
 	"net/http"
 	"regexp"
 )
@@ -21,14 +23,27 @@ func handleIndex(programs []*program.Program) func(http.ResponseWriter, *http.Re
 	}
 }
 
+func handleExecution(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	programName := vars["program"]
+	log.Println("executing program:", programName)
+	http.Redirect(w, req, "/", 302)
+}
+
 func Serve(httpAddr string, programs []*program.Program) error {
 	nrsc.Handle("/static/")
 	nrsc.Mask(TMPL)
-	http.HandleFunc("/", handleIndex(programs))
+	
+	r := mux.NewRouter()
+	r.HandleFunc("/", handleIndex(programs))
+	r.HandleFunc("/execute/{program}", handleExecution)
+	http.Handle("/", r)
 
 	server := &http.Server{
 		Addr: httpAddr,
 	}
+	
+	log.Println("dagr listening on", httpAddr)
 
 	return server.ListenAndServe()
 }

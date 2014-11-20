@@ -18,7 +18,7 @@
         width: 900px;
         margin: 0 auto;
         height: 100%;
-        box-shadow:         0px 0px 25px 11px rgba(50, 50, 50, 0.05);
+        box-shadow: 0px 0px 25px 11px rgba(50, 50, 50, 0.05);
       }
       .status h2 {
         font-size: 55pt;
@@ -114,8 +114,9 @@
                 <div class="succeeded">Succeeded</div>
               </td>
               <td>
-                <a class="pure-button pure-button-primary" href="">Execute</a>
-                
+                <form action="/execute/{{.Name}}" method="post">
+                  <button class="pure-button pure-button-primary">Run</button>
+                </form>
               </td>
             </tr>
 {{ end }}
