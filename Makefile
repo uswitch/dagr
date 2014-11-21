@@ -9,3 +9,6 @@ dagr: dagr-dev resources/index.html.tmpl
 clean:
 	go clean
 	rm -f dagr-dev
+
+.PHONY: all clean
+
