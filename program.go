@@ -10,6 +10,7 @@ import (
 
 type Program struct {
 	Name string `json:"name"`
+	CommandPath string
 }
 
 func (*Program) Execute() *exec.Cmd {
@@ -33,10 +34,10 @@ func readDir(dir string) ([]*Program, error) {
 
 	for _, info := range infos {
 		if err == nil && info.IsDir() && isProgram(dir, info.Name()) {
-			programName := info.Name()
-			log.Println("found program:", programName)
+			commandPath := filepath.Join(dir, info.Name(), "main")
+			log.Println("program executable:", commandPath)
 
-			programs = append(programs, &Program{info.Name()})
+			programs = append(programs, &Program{info.Name(), commandPath})
 		}
 	}
 
