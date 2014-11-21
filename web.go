@@ -175,6 +175,18 @@ func (e *ExecutionSubscribers) BroadcastMessage(msg string) {
 	}
 }
 
+// read is required (http://www.gorillatoolkit.org/pkg/websocket)
+func readLoop(executionState *ExecutionState, c *websocket.Conn) {
+	for {
+		_, _, err := c.NextReader()
+		if err != nil {
+			c.Close()
+			executionState.Unsubscribe(c)
+			return
+		}
+	}
+}
+
 func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		conn, err := upgrader.Upgrade(w, req, nil)
@@ -187,7 +199,8 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 		log.Println("broadcasting messages for execution id:", executionId)
 		executionState := dagr.FindExecution(executionId)
 		
-		executionState.Subscribe(conn)
+		executionState.Subscribe(conn)		
+		go readLoop(executionState, conn)
 	}
 }
 
