@@ -26,3 +26,7 @@ To install nrsc (packaging tool):
 ## Install
 
     $ cp dagr somewhere
+
+## Run
+
+    $ dagr --port :8080 --repo git@github.com:company/dagr-programs --work /tmp/dagr-work
