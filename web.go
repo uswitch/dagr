@@ -69,9 +69,9 @@ func Serve(httpAddr string, dagr Dagr) error {
 	nrsc.Mask(TMPL)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", handleIndex(dagr))
-	r.HandleFunc("/program/{program}", handleInfo(dagr))
-	r.HandleFunc("/program/{program}/execute", handleExecution(dagr))
+	r.HandleFunc("/", handleIndex(dagr)).Methods("GET")
+	r.HandleFunc("/program/{program}", handleInfo(dagr)).Methods("GET")
+	r.HandleFunc("/program/{program}/execute", handleExecution(dagr)).Methods("POST")
 	http.Handle("/", r)
 
 	server := &http.Server{
