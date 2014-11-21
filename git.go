@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,19 +20,11 @@ func Pull(workingDir string) error {
 	return exec.Command("git", "-C", workingDir, "pull").Run()
 }
 
-func MasterSha(workingDir string) (string, error) {
-	bytes, err := ioutil.ReadFile(filepath.Join(workingDir, ".git", "refs", "heads", "master"))
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
-
-// performs Clone or Pull as necessary
+// performs Pull or Clone as necessary
 func Update(repo, workingDir string) error {
-	if !IsRepo(workingDir) {
-		return Clone(repo, workingDir)
-	} else {
+	if IsRepo(workingDir) {
 		return Pull(workingDir)
+	} else {
+		return Clone(repo, workingDir)
 	}
 }
