@@ -5,8 +5,14 @@ runs programs every day (in Norse mythology, Dagr is day personified)
 
 ## Prerequisites
 
-* Go
-* git (at runtime)
+### Build time prerequisites
+
+* go
+* zip
+
+### Run time prerequisites
+
+* git
 
 ## Installation
 
