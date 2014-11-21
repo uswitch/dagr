@@ -58,7 +58,8 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			program.Execute()
+			exec := NewExecution(program)
+			exec.Execute()
 			http.Redirect(w, req, "/", 302)
 		}
 	}
