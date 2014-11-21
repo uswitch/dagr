@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sync"
 	"text/template"
 )
 
@@ -154,18 +155,25 @@ var upgrader = websocket.Upgrader{
 
 type ExecutionSubscribers struct {
 	subscribers map[*websocket.Conn]bool
+	sync.RWMutex
 }
 
 func NewExecutionSubscribers() *ExecutionSubscribers {
-	return &ExecutionSubscribers{make(map[*websocket.Conn]bool)}
+	return &ExecutionSubscribers{subscribers: make(map[*websocket.Conn]bool)}
 }
 func (e *ExecutionSubscribers) Unsubscribe(c *websocket.Conn) {
+	e.Lock()
+	defer e.Unlock()
 	delete(e.subscribers, c)
 }
 func (e *ExecutionSubscribers) Subscribe(c *websocket.Conn) {
+	e.Lock()
+	defer e.Unlock()
 	e.subscribers[c] = true
 }
 func (e *ExecutionSubscribers) BroadcastMessage(msg string) {
+	e.RLock()
+	defer e.RUnlock()
 	for conn := range e.subscribers {
 		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
 	}
