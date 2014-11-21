@@ -8,7 +8,7 @@ deps:
 dagr-dev: *.go
 	go build -o dagr-dev .
 
-dagr: dagr-dev resources/index.html.tmpl resources/show.html.tmpl resources/info.html.tmpl resources/dagr.css
+dagr: dagr-dev resources/index.html.tmpl resources/websocket.js resources/show.html.tmpl resources/info.html.tmpl resources/dagr.css
 	cp dagr-dev dagr && rice append --exec dagr
 
 clean:

@@ -125,7 +125,9 @@ func showExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
 		} else {
-			executionUrl := "ws://localhost:8080/executions/" + executionId + "/messages"
+			executionUrl := fmt.Sprintf("/executions/%s/messages", executionId)
+			log.Println("socket path:", executionUrl)
+			// executionUrl := "ws://localhost:8080/executions/" + executionId + "/messages"
 
 			if err := showTemplate.Execute(w, ExecutionPageState{execution.Execution, executionUrl}); err != nil {
 				log.Println("error when executing execution template:", err)
