@@ -15,17 +15,11 @@ var monitorInterval = kingpin.Flag("interval", "interval between checks for new 
 func main() {
 	kingpin.Parse()
 
-	err := PullOrClone(*programsRepo, *workingDir)
+	dagr, err := MakeDagr(*programsRepo, *workingDir, *monitorInterval)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	programs, err := MonitorPrograms(*programsRepo, *workingDir, *monitorInterval)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Fatal(Serve(httpAddr.String(), programs))
+	log.Fatal(Serve(httpAddr.String(), dagr))
 }

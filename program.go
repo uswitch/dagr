@@ -2,14 +2,18 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"time"
 )
 
 type Program struct {
+	Dir  string `json:"dir"`
 	Name string `json:"name"`
+}
+
+func (*Program) Execute() *exec.Cmd {
+	return &exec.Cmd{}
 }
 
 // does the given directory contain a 'main' file?
@@ -28,60 +32,8 @@ func readDir(dir string) ([]*Program, error) {
 
 	for _, info := range infos {
 		if err == nil && info.IsDir() && isProgram(dir, info.Name()) {
-			programs = append(programs, &Program{info.Name()})
+			programs = append(programs, &Program{dir, info.Name()})
 		}
 	}
 	return programs, nil
-}
-
-func MonitorPrograms(repo, workingDir string, delay time.Duration) (chan []*Program, error) {
-	ch := make(chan []*Program)
-
-	sha := ""
-
-	go func() {
-		for {
-			defer func() {
-				time.Sleep(delay)
-			}()
-
-			newSha, err := MasterSha(repo)
-
-			if err != nil {
-				log.Print(err)
-				continue
-			}
-
-			if newSha != sha {
-				err := Pull(workingDir)
-
-				if err != nil {
-					log.Print(err)
-					continue
-				}
-
-				newPrograms, err := readDir(workingDir)
-
-				if err != nil {
-					log.Print(err)
-					continue
-				}
-
-				ch <- newPrograms
-				sha = newSha
-			}
-		}
-	}()
-
-	return ch, nil
-}
-
-func FindProgram(name string, programs []*Program) *Program {
-	for _, program := range programs {
-		if program.Name == name {
-			return program
-		}
-	}
-
-	return nil
 }
