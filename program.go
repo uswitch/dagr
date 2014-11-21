@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"syscall"
 	"log"
 	"os"
 	"os/exec"
@@ -27,7 +28,18 @@ func (e *ExecutionWriter) Write(bs []byte) (n int, err error) {
 	return len(bs), nil
 }
 
-func (p *Program) Execute() {
+const (
+	Success = 0
+	Retryable = 1
+	Failed = 2
+)
+
+type ProgramExecution struct {
+	Program *Program
+	ExitCode int
+}
+
+func (p *Program) Execute() (*ProgramExecution, error) {
 	log.Println("executing", p.CommandPath)
 	cmd := exec.Command(p.CommandPath)
 	w := NewExecutionWriter(p)
@@ -36,11 +48,21 @@ func (p *Program) Execute() {
 	
 	err := cmd.Run()
 	
-	if err != nil {
-		log.Println(err)
+	if err == nil {
+		log.Println("finished executing", p.Name)
+		return &ProgramExecution{p, Success}, nil
+	}
+	log.Println("command error", err)
+	
+	executionError := err.(*exec.ExitError)
+	
+	if executionError != nil {
+		ws := executionError.Sys().(syscall.WaitStatus)
+		exitCode := ws.ExitStatus()
+		return &ProgramExecution{p, exitCode}, nil
 	}
 	
-	log.Println("finished executing", p.Name)
+	return nil, err
 }
 
 // does the given directory contain a 'main' file?
