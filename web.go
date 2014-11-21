@@ -1,18 +1,17 @@
 package main
 
 import (
-	"bitbucket.org/tebeka/nrsc"
+	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
-	"html/template"
 	"log"
 	"net/http"
 	"regexp"
+	"text/template"
 )
 
 var TMPL = regexp.MustCompile(".tmpl$")
 
-var index = template.Must(nrsc.LoadTemplates(nil, "index.html.tmpl"))
-var info = template.Must(nrsc.LoadTemplates(nil, "info.html.tmpl"))
+var resourceBox = rice.MustFindBox("resources")
 
 type IndexState struct {
 	Succeeded int
@@ -34,6 +33,12 @@ func handleIndex(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 }
 
 func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+	var infoTemplate, err = loadTemplate("info.html.tmpl")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]
@@ -41,7 +46,7 @@ func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
-		} else if err := info.Execute(w, InfoState{program}); err != nil {
+		} else if err := infoTemplate.Execute(w, InfoState{program}); err != nil {
 			http.NotFound(w, req)
 		}
 	}
@@ -63,9 +68,19 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+func loadTemplate(path string) (*template.Template, error) {
+	templateString, err := resourceBox.String(path)
+	if err != nil {
+		return nil, err
+	}
+	var t = template.New(path)
+	return t.Parse(templateString)
+}
+
 func Serve(httpAddr string, dagr Dagr) error {
-	nrsc.Handle("/static/")
-	nrsc.Mask(TMPL)
+
+	var executionTemplate = template.New("execution.html.tmpl")
+	var indexTemplate = template.New("index.html.tmpl")
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex(dagr)).Methods("GET")
