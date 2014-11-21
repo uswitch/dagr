@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="/static/dagr.css">
     <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
     <script src="/static/websocket.js"></script>
-    <title>Dagr: {{.Execution.Program.Name}}</title>
+    <title>Dagr: {{.Program.Name}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   
@@ -22,7 +22,7 @@
       </div>
       
       <div class="status pure-g">
-        <h2>{{.Execution.Program.Name}}</h2>
+        <h2>{{.Program.Name}}</h2>
       </div>
       
       <div id="messages" data-exec-url="{{.ExecutionUrl}}">

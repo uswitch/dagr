@@ -2,40 +2,11 @@ package main
 
 import (
 	"bufio"
-	"io"
 	"log"
 	"os/exec"
 )
 
 const BUFFER_SIZE = 1000
-
-type ExecutionWriter struct {
-	ProgramName string
-	Message     chan string
-	stdout      io.ReadCloser
-}
-
-func NewExecutionWriter(e *Execution, cmd *exec.Cmd) (*ExecutionWriter, error) {
-	stdout, err := cmd.StdoutPipe()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &ExecutionWriter{e.Program.Name, make(chan string, BUFFER_SIZE), stdout}, nil
-}
-
-func (e *ExecutionWriter) Copy() error {
-	scanner := bufio.NewScanner(e.stdout)
-
-	for scanner.Scan() {
-		s := scanner.Text()
-		log.Println(e.ProgramName, s)
-		e.Message <- s
-	}
-
-	return scanner.Err()
-}
 
 const (
 	Success   = 0
@@ -43,38 +14,41 @@ const (
 	Failed    = 2
 )
 
-type Execution struct {
-	Writer  *ExecutionWriter
-	Program *Program
-}
+func (p *Program) Execute() (chan string, error) {
+	log.Println("executing", p.CommandPath)
+	cmd := exec.Command(p.CommandPath)
 
-func (e *Execution) Execute() error {
-	log.Println("executing", e.Program.CommandPath)
-	cmd := exec.Command(e.Program.CommandPath)
-
-	w, err := NewExecutionWriter(e, cmd)
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	e.Writer = w
-
 	// go func() {
-	//	log.Println("waiting to finish", e.Program.Name)
+	//	log.Println("waiting to finish", p.Name)
 	//	cmd.Wait()
-	//	log.Println("finished", e.Program.Name)
+	//	log.Println("finished", p.Name)
 	// }()
 
-	go w.Copy()
+	messages := make(chan string, BUFFER_SIZE)
 
-	return nil
-}
+	go func() {
+		scanner := bufio.NewScanner(stdout)
 
-func NewExecution(program *Program) *Execution {
-	return &Execution{nil, program}
+		for scanner.Scan() {
+			s := scanner.Text()
+			log.Println(p.Name, s)
+			messages <- s
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Println("scanner error", err)
+		}
+	}()
+
+	return messages, nil
 }

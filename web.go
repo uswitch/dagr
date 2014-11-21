@@ -29,7 +29,7 @@ type InfoPageState struct {
 }
 
 type ExecutionPageState struct {
-	Execution    *Execution
+	Program      *Program
 	ExecutionUrl string
 }
 
@@ -61,25 +61,35 @@ func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-type ExecutionState struct {
-	Execution            *Execution
-	ExecutionSubscribers *ExecutionSubscribers
+type Execution struct {
+	program     *Program
+	subscribers map[*websocket.Conn]bool
+	sync.RWMutex
 }
 
-func (e *ExecutionState) Subscribe(c *websocket.Conn) {
+func (e *Execution) Subscribe(c *websocket.Conn) {
+	e.Lock()
+	defer e.Unlock()
 	log.Println("adding subscriber")
-	e.ExecutionSubscribers.Subscribe(c)
+	e.subscribers[c] = true
 }
-func (e *ExecutionState) Unsubscribe(c *websocket.Conn) {
+func (e *Execution) Unsubscribe(c *websocket.Conn) {
+	e.Lock()
+	defer e.Unlock()
 	log.Println("removing subscriber")
-	e.ExecutionSubscribers.Unsubscribe(c)
+	delete(e.subscribers, c)
 }
-func (e *ExecutionState) StartRelay() {
-	go func() {
-		for msg := range e.Execution.Writer.Message {
-			e.ExecutionSubscribers.BroadcastMessage(msg)
-		}
-	}()
+func (e *Execution) Broadcast(msg string) {
+	e.RLock()
+	defer e.RUnlock()
+	for conn := range e.subscribers {
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
+	}
+}
+func (e *Execution) BroadcastAllMessages(messages chan string) {
+	for msg := range messages {
+		e.Broadcast(msg)
+	}
 }
 
 func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
@@ -91,15 +101,21 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			exec := NewExecution(program)
-			guid := uuid.New()
-			executionState := &ExecutionState{exec, NewExecutionSubscribers()}
-			dagr.AddExecution(guid, executionState)
+			executionId := uuid.New()
+			execution := &Execution{program: program, subscribers: make(map[*websocket.Conn]bool)}
+			dagr.AddExecution(executionId, execution)
 
-			exec.Execute()              // FIXME -- this may return an error
-			executionState.StartRelay() // FIXME -- has to be run after Execute()
+			executionMessages, err := program.Execute()
 
-			http.Redirect(w, req, "/executions/"+guid, 302)
+			if err != nil {
+				log.Println("error on execution:", err)
+				http.Error(w, err.Error(), 500)
+				return
+			}
+
+			go execution.BroadcastAllMessages(executionMessages)
+
+			http.Redirect(w, req, "/executions/"+executionId, 302)
 		}
 	}
 }
@@ -112,14 +128,14 @@ func showExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 		executionId := vars["executionId"]
 		execution := dagr.FindExecution(executionId)
 		if execution == nil {
-			log.Println("no such execution:", executionId)
+			log.Println("no such execution monitor:", executionId)
 			http.NotFound(w, req)
 		} else {
 			executionUrl := fmt.Sprintf("/executions/%s/messages", executionId)
 			log.Println("socket path:", executionUrl)
 			// executionUrl := "ws://localhost:8080/executions/" + executionId + "/messages"
 
-			if err := showTemplate.Execute(w, ExecutionPageState{execution.Execution, executionUrl}); err != nil {
+			if err := showTemplate.Execute(w, ExecutionPageState{execution.program, executionUrl}); err != nil {
 				log.Println("error when executing execution template:", err)
 				http.Error(w, err.Error(), 500)
 			}
@@ -135,39 +151,13 @@ func loadTemplate(path string) (*template.Template, error) {
 	return template.New(path).Parse(templateString)
 }
 
-type ExecutionSubscribers struct {
-	subscribers map[*websocket.Conn]bool
-	sync.RWMutex
-}
-
-func NewExecutionSubscribers() *ExecutionSubscribers {
-	return &ExecutionSubscribers{subscribers: make(map[*websocket.Conn]bool)}
-}
-func (e *ExecutionSubscribers) Unsubscribe(c *websocket.Conn) {
-	e.Lock()
-	defer e.Unlock()
-	delete(e.subscribers, c)
-}
-func (e *ExecutionSubscribers) Subscribe(c *websocket.Conn) {
-	e.Lock()
-	defer e.Unlock()
-	e.subscribers[c] = true
-}
-func (e *ExecutionSubscribers) BroadcastMessage(msg string) {
-	e.RLock()
-	defer e.RUnlock()
-	for conn := range e.subscribers {
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
-	}
-}
-
 // read is required (http://www.gorillatoolkit.org/pkg/websocket)
-func readLoop(executionState *ExecutionState, c *websocket.Conn) {
+func readLoop(execution *Execution, c *websocket.Conn) {
 	for {
 		_, _, err := c.NextReader()
 		if err != nil {
 			c.Close()
-			executionState.Unsubscribe(c)
+			execution.Unsubscribe(c)
 			return
 		}
 	}
@@ -187,11 +177,11 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 		}
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
-		log.Println("broadcasting messages for execution id:", executionId)
-		executionState := dagr.FindExecution(executionId)
+		log.Println("broadcasting messages for execution monitor id:", executionId)
+		execution := dagr.FindExecution(executionId)
 
-		executionState.Subscribe(conn)
-		go readLoop(executionState, conn)
+		execution.Subscribe(conn)
+		go readLoop(execution, conn)
 	}
 }
 
