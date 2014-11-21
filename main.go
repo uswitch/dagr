@@ -14,7 +14,7 @@ var workingDir = kingpin.Flag("work", "working directory").Short('w').Required()
 func main() {
 	kingpin.Parse()
 
-	err := Update(*programsRepo, *workingDir)
+	err := PullOrClone(*programsRepo, *workingDir)
 
 	if err != nil {
 		log.Fatal(err)

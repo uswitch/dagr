@@ -21,7 +21,7 @@ func Pull(workingDir string) error {
 }
 
 // performs Pull or Clone as necessary
-func Update(repo, workingDir string) error {
+func PullOrClone(repo, workingDir string) error {
 	if IsRepo(workingDir) {
 		return Pull(workingDir)
 	} else {
