@@ -1,9 +1,6 @@
 package main
 
 import (
-	"github.com/uswitch/dagr/git"
-	"github.com/uswitch/dagr/program"
-	"github.com/uswitch/dagr/web"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
 )
@@ -17,17 +14,17 @@ var workingDir = kingpin.Flag("work", "working directory").Short('w').Required()
 func main() {
 	kingpin.Parse()
 
-	err := git.Update(*programsRepo, *workingDir)
+	err := Update(*programsRepo, *workingDir)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	programs, err := program.ReadDir(*workingDir)
+	programs, err := ReadDir(*workingDir)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Fatal(web.Serve(httpAddr.String(), programs))
+	log.Fatal(Serve(httpAddr.String(), programs))
 }

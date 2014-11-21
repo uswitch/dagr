@@ -1,6 +1,6 @@
 all: dagr
 
-dagr-dev: main.go web/web.go program/program.go execute/execute.go git/git.go
+dagr-dev: *.go
 	go build -o dagr-dev .
 
 dagr: dagr-dev resources/index.html.tmpl

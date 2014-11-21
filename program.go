@@ -1,4 +1,4 @@
-package program
+package main
 
 import (
 	"io/ioutil"
