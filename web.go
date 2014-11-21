@@ -68,6 +68,11 @@ func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+type ExecutionState struct {
+	Execution *Execution
+	ExecutionSubscribers *ExecutionSubscribers
+}
+
 func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -79,7 +84,7 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 		} else {
 			exec := NewExecution(program)
 			guid := uuid.New()
-			dagr.AddExecution(guid, exec)
+			dagr.AddExecution(guid, &ExecutionState{exec, NewExecutionSubscribers()})
 			exec.Execute() // FIXME -- this may return an error
 			http.Redirect(w, req, "/executions/"+guid, 302)
 		}
@@ -103,7 +108,7 @@ func showExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 		} else {
 			executionUrl := "ws://localhost:8080/executions/" + executionId + "/messages"
 
-			if err := showTemplate.Execute(w, ExecutionPageState{execution, executionUrl}); err != nil {
+			if err := showTemplate.Execute(w, ExecutionPageState{execution.Execution, executionUrl}); err != nil {
 				log.Println("error when executing execution template:", err)
 				http.Error(w, err.Error(), 500)
 			}
@@ -125,6 +130,30 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+
+
+type ExecutionSubscribers struct {
+	subscribers []*websocket.Conn
+}
+func NewExecutionSubscribers() *ExecutionSubscribers {
+	return &ExecutionSubscribers{}
+}
+func (e *ExecutionSubscribers) Unsubscribe(c *websocket.Conn) {
+	for i, conn := range e.subscribers {
+		if conn == c {
+			e.subscribers = append(e.subscribers[:i], e.subscribers[i+1:]...)
+		}
+	}
+}
+func (e *ExecutionSubscribers) Subscribe(c *websocket.Conn) {
+	e.subscribers = append(e.subscribers, c)
+}
+func (e *ExecutionSubscribers) SendMessage(msg string) {
+	for _, conn := range e.subscribers {
+		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
+	}
+}
+
 func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		conn, err := upgrader.Upgrade(w, req, nil)
@@ -138,7 +167,7 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 		execution := dagr.FindExecution(executionId)
 
 		go func() {
-			for msg := range execution.Writer.Message {
+			for msg := range execution.Execution.Writer.Message {
 				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
 			}
 		}()

@@ -8,20 +8,20 @@ import (
 
 type Dagr interface {
 	AllPrograms() []*Program
-	AddExecution(string, *Execution)
+	AddExecution(string, *ExecutionState)
 	FindProgram(string) *Program
-	FindExecution(string) *Execution
+	FindExecution(string) *ExecutionState
 }
 
 type dagrState struct {
 	programs   []*Program
-	executions map[string]*Execution
+	executions map[string]*ExecutionState
 	sync.RWMutex
 }
 
 func newDagrState() *dagrState {
 	s := &dagrState{}
-	s.executions = make(map[string]*Execution)
+	s.executions = make(map[string]*ExecutionState)
 	return s
 }
 
@@ -37,13 +37,13 @@ func (this *dagrState) FindProgram(name string) *Program {
 	return nil
 }
 
-func (this *dagrState) AddExecution(executionId string, execution *Execution) {
+func (this *dagrState) AddExecution(executionId string, execution *ExecutionState) {
 	this.Lock()
 	defer this.Unlock()
 	this.executions[executionId] = execution
 }
 
-func (this *dagrState) FindExecution(executionId string) *Execution {
+func (this *dagrState) FindExecution(executionId string) *ExecutionState {
 	this.RLock()
 	defer this.RUnlock()
 	return this.executions[executionId]
