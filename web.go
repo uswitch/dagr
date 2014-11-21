@@ -34,11 +34,7 @@ type ExecutionPageState struct {
 }
 
 func handleIndex(dagr Dagr) func(http.ResponseWriter, *http.Request) {
-	indexTemplate, err := loadTemplate("index.html.tmpl")
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	indexTemplate := template.Must(loadTemplate("index.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		if err := indexTemplate.Execute(w, IndexPageState{77, 13, 12, dagr.AllPrograms()}); err != nil {
@@ -49,11 +45,7 @@ func handleIndex(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 }
 
 func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
-	infoTemplate, err := loadTemplate("info.html.tmpl")
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	infoTemplate := template.Must(loadTemplate("info.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -113,11 +105,7 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 }
 
 func showExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
-	showTemplate, err := loadTemplate("show.html.tmpl")
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	showTemplate := template.Must(loadTemplate("show.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -144,13 +132,7 @@ func loadTemplate(path string) (*template.Template, error) {
 	if err != nil {
 		return nil, err
 	}
-	var t = template.New(path)
-	return t.Parse(templateString)
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	return template.New(path).Parse(templateString)
 }
 
 type ExecutionSubscribers struct {
@@ -192,6 +174,11 @@ func readLoop(executionState *ExecutionState, c *websocket.Conn) {
 }
 
 func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
 	return func(w http.ResponseWriter, req *http.Request) {
 		conn, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
