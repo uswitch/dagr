@@ -2,6 +2,7 @@ package main
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"fmt"
 	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -138,7 +139,7 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 
 		go func() {
 			for msg := range execution.Writer.Message {
-				conn.WriteMessage(websocket.TextMessage, []byte(msg))
+				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
 			}
 		}()
 	}

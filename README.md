@@ -9,12 +9,6 @@ runs programs every day (in Norse mythology, Dagr is day personified)
 
 * go
 * zip
-* rice
-
-To install rice (packaging tool):
-
-    $ go get github.com/GeertJohan/go.rice
-    $ go get github.com/GeertJohan/go.rice/rice
 
 ### Run time prerequisites
 
@@ -22,11 +16,9 @@ To install rice (packaging tool):
 
 ## Build
 
+    $ make deps
+    $ export PATH=$GOPATH/bin:$PATH
     $ make
-
-## Install
-
-    $ cp dagr somewhere
 
 ## Run
 
