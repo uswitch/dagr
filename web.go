@@ -72,6 +72,21 @@ type ExecutionState struct {
 	Execution *Execution
 	ExecutionSubscribers *ExecutionSubscribers
 }
+func (e *ExecutionState) Subscribe(c *websocket.Conn) {
+	log.Println("adding subscriber")
+	e.ExecutionSubscribers.Subscribe(c)
+}
+func (e *ExecutionState) Unsubscribe(c *websocket.Conn) {
+	log.Println("removing subscriber")
+	e.ExecutionSubscribers.Unsubscribe(c)
+}
+func (e *ExecutionState) StartRelay() {
+	go func() {
+		for msg := range e.Execution.Writer.Message {
+			e.ExecutionSubscribers.BroadcastMessage(msg)
+		}
+	}()
+}
 
 func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -84,8 +99,12 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 		} else {
 			exec := NewExecution(program)
 			guid := uuid.New()
-			dagr.AddExecution(guid, &ExecutionState{exec, NewExecutionSubscribers()})
+			executionState := &ExecutionState{exec, NewExecutionSubscribers()}
+			dagr.AddExecution(guid, executionState)
+
 			exec.Execute() // FIXME -- this may return an error
+			executionState.StartRelay() // FIXME -- has to be run after Execute()
+			
 			http.Redirect(w, req, "/executions/"+guid, 302)
 		}
 	}
@@ -148,7 +167,7 @@ func (e *ExecutionSubscribers) Unsubscribe(c *websocket.Conn) {
 func (e *ExecutionSubscribers) Subscribe(c *websocket.Conn) {
 	e.subscribers = append(e.subscribers, c)
 }
-func (e *ExecutionSubscribers) SendMessage(msg string) {
+func (e *ExecutionSubscribers) BroadcastMessage(msg string) {
 	for _, conn := range e.subscribers {
 		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
 	}
@@ -164,13 +183,9 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
 		log.Println("broadcasting messages for execution id:", executionId)
-		execution := dagr.FindExecution(executionId)
-
-		go func() {
-			for msg := range execution.Execution.Writer.Message {
-				conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
-			}
-		}()
+		executionState := dagr.FindExecution(executionId)
+		
+		executionState.Subscribe(conn)
 	}
 }
 
