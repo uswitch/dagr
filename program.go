@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,9 +14,21 @@ type Program struct {
 	CommandPath string
 }
 
-func (p *Program) Execute() *exec.Cmd {
-	log.Println("executing", p.Name)
-	return &exec.Cmd{}
+func (p *Program) Execute() {
+	log.Println("executing", p.CommandPath)
+	cmd := exec.Command(p.CommandPath)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("Output:", stdout.String())
+	log.Println("Err:", stderr.String())
+	
+	log.Println("finished executing", p.Name)
 }
 
 // does the given directory contain a 'main' file?
