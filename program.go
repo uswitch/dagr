@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,19 +13,32 @@ type Program struct {
 	CommandPath string
 }
 
+type ExecutionWriter struct {
+	ProgramName string
+}
+
+func NewExecutionWriter(p *Program) *ExecutionWriter {
+	return &ExecutionWriter{p.Name}
+}
+
+func (e *ExecutionWriter) Write(bs []byte) (n int, err error) {
+	s := string(bs[:])
+	log.Println(e.ProgramName, ":", s)
+	return len(bs), nil
+}
+
 func (p *Program) Execute() {
 	log.Println("executing", p.CommandPath)
 	cmd := exec.Command(p.CommandPath)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	w := NewExecutionWriter(p)
+	cmd.Stdout = w
+	cmd.Stderr = w
+	
 	err := cmd.Run()
+	
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println("Output:", stdout.String())
-	log.Println("Err:", stderr.String())
 	
 	log.Println("finished executing", p.Name)
 }
