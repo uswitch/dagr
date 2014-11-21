@@ -41,10 +41,8 @@ func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
-		} else {
-			if err := info.Execute(w, InfoState{program}); err != nil {
-				http.NotFound(w, req)
-			}
+		} else if err := info.Execute(w, InfoState{program}); err != nil {
+			http.NotFound(w, req)
 		}
 	}
 }
