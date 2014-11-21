@@ -20,6 +20,16 @@ func Pull(workingDir string) error {
 	return exec.Command("git", "-C", workingDir, "pull").Run()
 }
 
+func MasterSha(repo string) (string, error) {
+	bytes, err := exec.Command("git", "ls-remote", repo, "master").Output()
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
+}
+
 // performs Pull or Clone as necessary
 func PullOrClone(repo, workingDir string) error {
 	if IsRepo(workingDir) {

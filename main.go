@@ -8,6 +8,7 @@ import (
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
 var programsRepo = kingpin.Flag("repo", "repository containing programs").Short('r').Required().String()
 var workingDir = kingpin.Flag("work", "working directory").Short('w').Required().String()
+var monitorInterval = kingpin.Flag("interval", "interval between checks for new programs").Short('i').Default("10s").Duration()
 
 //var dbFile = kingpin.Flag("db", "sqlite database file").Short('d').Required().String()
 
@@ -20,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	programs, err := ReadDir(*workingDir)
+	programs, err := MonitorPrograms(*programsRepo, *workingDir, *monitorInterval)
 
 	if err != nil {
 		log.Fatal(err)
