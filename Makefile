@@ -8,4 +8,4 @@ dagr: dagr-dev resources/index.html.tmpl
 
 clean:
 	go clean
-	rm dagr-dev
+	rm -f dagr-dev
