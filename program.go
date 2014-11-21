@@ -13,7 +13,8 @@ type Program struct {
 	CommandPath string
 }
 
-func (*Program) Execute() *exec.Cmd {
+func (p *Program) Execute() *exec.Cmd {
+	log.Println("executing", p.Name)
 	return &exec.Cmd{}
 }
 
