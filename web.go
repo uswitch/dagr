@@ -3,6 +3,7 @@ package main
 import (
 	"bitbucket.org/tebeka/nrsc"
 	"github.com/gorilla/mux"
+	"html/template"
 	"log"
 	"net/http"
 	"regexp"
@@ -10,21 +11,40 @@ import (
 
 var TMPL = regexp.MustCompile(".tmpl$")
 
-type Status struct {
+var index = template.Must(nrsc.LoadTemplates(nil, "index.html.tmpl"))
+var info = template.Must(nrsc.LoadTemplates(nil, "info.html.tmpl"))
+
+type IndexState struct {
 	Succeeded int
 	Retryable int
 	Failed    int
 	Programs  []*Program
 }
 
+type InfoState struct {
+	Program *Program
+}
+
 func handleIndex(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		t, err := nrsc.LoadTemplates(nil, "index.html.tmpl")
-		if err != nil {
+		if err := index.Execute(w, IndexState{77, 13, 12, dagr.AllPrograms()}); err != nil {
 			http.NotFound(w, req)
 		}
-		if err = t.Execute(w, Status{77, 13, 12, dagr.AllPrograms()}); err != nil {
+	}
+}
+
+func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		programName := vars["program"]
+		program := dagr.FindProgram(programName)
+		if program == nil {
+			log.Println("no such program:", programName)
 			http.NotFound(w, req)
+		} else {
+			if err := info.Execute(w, InfoState{program}); err != nil {
+				http.NotFound(w, req)
+			}
 		}
 	}
 }
@@ -50,7 +70,8 @@ func Serve(httpAddr string, dagr Dagr) error {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex(dagr))
-	r.HandleFunc("/execute/{program}", handleExecution(dagr))
+	r.HandleFunc("/program/{program}", handleInfo(dagr))
+	r.HandleFunc("/program/{program}/execute", handleExecution(dagr))
 	http.Handle("/", r)
 
 	server := &http.Server{
