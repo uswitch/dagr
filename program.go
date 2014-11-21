@@ -20,17 +20,22 @@ func isProgram(parentDir, dir string) bool {
 
 func readDir(dir string) ([]*Program, error) {
 	programs := []*Program{}
-
+	
+	log.Println("looking for programs in", dir)
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return programs, err
 	}
-
+	
 	for _, info := range infos {
 		if err == nil && info.IsDir() && isProgram(dir, info.Name()) {
+			programName := info.Name()
+			log.Println("found program:", programName)
+			
 			programs = append(programs, &Program{info.Name()})
 		}
 	}
+	
 	return programs, nil
 }
 
@@ -53,6 +58,7 @@ func MonitorPrograms(repo, workingDir string, delay time.Duration) (chan []*Prog
 			}
 
 			if newSha != sha {
+				log.Println("pulling from repository", repo)
 				err := Pull(workingDir)
 
 				if err != nil {
