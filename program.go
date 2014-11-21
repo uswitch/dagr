@@ -8,7 +8,7 @@ import (
 )
 
 type Program struct {
-	Name string `json:"name"`
+	Name        string
 	CommandPath string
 }
 
