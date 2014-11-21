@@ -69,9 +69,10 @@ func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 }
 
 type ExecutionState struct {
-	Execution *Execution
+	Execution            *Execution
 	ExecutionSubscribers *ExecutionSubscribers
 }
+
 func (e *ExecutionState) Subscribe(c *websocket.Conn) {
 	log.Println("adding subscriber")
 	e.ExecutionSubscribers.Subscribe(c)
@@ -102,9 +103,9 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 			executionState := &ExecutionState{exec, NewExecutionSubscribers()}
 			dagr.AddExecution(guid, executionState)
 
-			exec.Execute() // FIXME -- this may return an error
+			exec.Execute()              // FIXME -- this may return an error
 			executionState.StartRelay() // FIXME -- has to be run after Execute()
-			
+
 			http.Redirect(w, req, "/executions/"+guid, 302)
 		}
 	}
@@ -151,26 +152,21 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-
-
 type ExecutionSubscribers struct {
-	subscribers []*websocket.Conn
+	subscribers map[*websocket.Conn]bool
 }
+
 func NewExecutionSubscribers() *ExecutionSubscribers {
-	return &ExecutionSubscribers{}
+	return &ExecutionSubscribers{make(map[*websocket.Conn]bool)}
 }
 func (e *ExecutionSubscribers) Unsubscribe(c *websocket.Conn) {
-	for i, conn := range e.subscribers {
-		if conn == c {
-			e.subscribers = append(e.subscribers[:i], e.subscribers[i+1:]...)
-		}
-	}
+	delete(e.subscribers, c)
 }
 func (e *ExecutionSubscribers) Subscribe(c *websocket.Conn) {
-	e.subscribers = append(e.subscribers, c)
+	e.subscribers[c] = true
 }
 func (e *ExecutionSubscribers) BroadcastMessage(msg string) {
-	for _, conn := range e.subscribers {
+	for conn := range e.subscribers {
 		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
 	}
 }
@@ -198,8 +194,8 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 		executionId := vars["executionId"]
 		log.Println("broadcasting messages for execution id:", executionId)
 		executionState := dagr.FindExecution(executionId)
-		
-		executionState.Subscribe(conn)		
+
+		executionState.Subscribe(conn)
 		go readLoop(executionState, conn)
 	}
 }
