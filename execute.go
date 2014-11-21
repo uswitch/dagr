@@ -42,21 +42,23 @@ func (e *Execution) Execute() {
 	cmd.Stdout = w
 	cmd.Stderr = w
 
-	err := cmd.Run()
+	go func() {
+		err := cmd.Run()
 
-	if err == nil {
-		log.Println("finished executing", e.Program.Name)
-	} else {
-		log.Println("command error", err)
+		if err == nil {
+			log.Println("finished executing", e.Program.Name)
+		} else {
+			log.Println("command error", err)
 
-		executionError := err.(*exec.ExitError)
+			executionError := err.(*exec.ExitError)
 
-		if executionError != nil {
-			ws := executionError.Sys().(syscall.WaitStatus)
-			exitCode := ws.ExitStatus()
-			log.Println("exit code", exitCode)
+			if executionError != nil {
+				ws := executionError.Sys().(syscall.WaitStatus)
+				exitCode := ws.ExitStatus()
+				log.Println("exit code", exitCode)
+			}
 		}
-	}
+	}()
 }
 
 func NewExecution(program *Program) *Execution {

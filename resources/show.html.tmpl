@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-nr-min.css">
+    <link rel="stylesheet" href="/static/dagr.css">
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="/static/websocket.js"></script>
+    <title>Dagr: {{.Execution.Program.Name}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  
+  <body>
+    <div id="container">
+      <!-- header --> 
+      <div class="pure-menu pure-menu-open pure-menu-horizontal">
+        <a href="#" class="pure-menu-heading">Dagr</a>
+
+        <ul>
+          <li><a href="/">Today</a></li>
+          <li class="pure-menu-selected"><a href="#">Programs</a></li>
+        </ul>
+      </div>
+      
+      <div class="status pure-g">
+        <h2>{{.Execution.Program.Name}}</h2>
+      </div>
+      
+      <div id="messages" data-exec-url="{{.ExecutionUrl}}">
+        <pre>
+        </pre>
+      </div>
+
+    </div>
+  </body>
+</html>

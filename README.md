@@ -9,11 +9,12 @@ runs programs every day (in Norse mythology, Dagr is day personified)
 
 * go
 * zip
-* nrsc
+* rice
 
-To install nrsc (packaging tool):
+To install rice (packaging tool):
 
-    $ go get -u bitbucket.org/tebeka/nrsc/nrsc
+    $ go get github.com/GeertJohan/go.rice
+    $ go get github.com/GeertJohan/go.rice/rice
 
 ### Run time prerequisites
 

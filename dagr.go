@@ -8,12 +8,21 @@ import (
 
 type Dagr interface {
 	AllPrograms() []*Program
+	AddExecution(string, *Execution)
 	FindProgram(string) *Program
+	FindExecution(string) *Execution
 }
 
 type dagrState struct {
-	programs []*Program
+	programs   []*Program
+	executions map[string]*Execution
 	sync.RWMutex
+}
+
+func newDagrState() *dagrState {
+	s := &dagrState{}
+	s.executions = make(map[string]*Execution)
+	return s
 }
 
 func (this *dagrState) FindProgram(name string) *Program {
@@ -28,6 +37,18 @@ func (this *dagrState) FindProgram(name string) *Program {
 	return nil
 }
 
+func (this *dagrState) AddExecution(executionId string, execution *Execution) {
+	this.Lock()
+	defer this.Unlock()
+	this.executions[executionId] = execution
+}
+
+func (this *dagrState) FindExecution(executionId string) *Execution {
+	this.RLock()
+	defer this.RUnlock()
+	return this.executions[executionId]
+}
+
 func (this *dagrState) AllPrograms() []*Program {
 	this.RLock()
 	defer this.RUnlock()
@@ -35,7 +56,7 @@ func (this *dagrState) AllPrograms() []*Program {
 }
 
 func MakeDagr(repo, workingDir string, delay time.Duration) (*dagrState, error) {
-	s := &dagrState{}
+	s := newDagrState()
 
 	err := PullOrClone(repo, workingDir)
 
