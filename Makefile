@@ -1,4 +1,9 @@
 all: dagr
+	
+.PHONY: deps
+
+deps:
+	go get
 
 dagr-dev: *.go
 	go build -o dagr-dev .
