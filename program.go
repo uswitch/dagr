@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"io/ioutil"
+	"syscall"
 	"log"
 	"os"
 	"os/exec"
@@ -14,21 +14,55 @@ type Program struct {
 	CommandPath string
 }
 
-func (p *Program) Execute() {
+type ExecutionWriter struct {
+	ProgramName string
+}
+
+func NewExecutionWriter(p *Program) *ExecutionWriter {
+	return &ExecutionWriter{p.Name}
+}
+
+func (e *ExecutionWriter) Write(bs []byte) (n int, err error) {
+	s := string(bs[:])
+	log.Println(e.ProgramName, ":", s)
+	return len(bs), nil
+}
+
+const (
+	Success = 0
+	Retryable = 1
+	Failed = 2
+)
+
+type ProgramExecution struct {
+	Program *Program
+	ExitCode int
+}
+
+func (p *Program) Execute() (*ProgramExecution, error) {
 	log.Println("executing", p.CommandPath)
 	cmd := exec.Command(p.CommandPath)
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("Output:", stdout.String())
-	log.Println("Err:", stderr.String())
+	w := NewExecutionWriter(p)
+	cmd.Stdout = w
+	cmd.Stderr = w
 	
-	log.Println("finished executing", p.Name)
+	err := cmd.Run()
+	
+	if err == nil {
+		log.Println("finished executing", p.Name)
+		return &ProgramExecution{p, Success}, nil
+	}
+	log.Println("command error", err)
+	
+	executionError := err.(*exec.ExitError)
+	
+	if executionError != nil {
+		ws := executionError.Sys().(syscall.WaitStatus)
+		exitCode := ws.ExitStatus()
+		return &ProgramExecution{p, exitCode}, nil
+	}
+	
+	return nil, err
 }
 
 // does the given directory contain a 'main' file?
