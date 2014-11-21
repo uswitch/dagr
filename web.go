@@ -79,7 +79,7 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 			exec := NewExecution(program)
 			guid := uuid.New()
 			dagr.AddExecution(guid, exec)
-			exec.Execute()
+			exec.Execute() // FIXME -- this may return an error
 			http.Redirect(w, req, "/executions/"+guid, 302)
 		}
 	}
@@ -134,8 +134,13 @@ func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request)
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
 		log.Println("broadcasting messages for execution id:", executionId)
+		execution := dagr.FindExecution(executionId)
 
-		conn.WriteMessage(websocket.TextMessage, []byte("hello "+executionId))
+		go func() {
+			for msg := range execution.Writer.Message {
+				conn.WriteMessage(websocket.TextMessage, []byte(msg))
+			}
+		}()
 	}
 }
 
