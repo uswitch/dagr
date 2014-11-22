@@ -1,4 +1,4 @@
-![Dagr by Arbo](http://upload.wikimedia.org/wikipedia/commons/7/7d/Dagr_by_Arbo.jpg)
+<img src="http://upload.wikimedia.org/wikipedia/commons/7/7d/Dagr_by_Arbo.jpg" alt="Dagr by Arbo" width="400px">
 
 dagr
 ====
