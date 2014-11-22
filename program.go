@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 )
 
 type Program struct {
@@ -36,13 +38,24 @@ func (p *Program) Execute() (chan string, error) {
 		return nil, err
 	}
 
-	// go func() {
-	//	log.Println("waiting to finish", p.Name)
-	//	cmd.Wait()
-	//	log.Println("finished", p.Name)
-	// }()
-
 	messages := make(chan string, BUFFER_SIZE)
+
+	go func() {
+		log.Println(p.Name, "waiting to complete")
+		err := cmd.Wait()
+		if err == nil {
+			log.Println(p.Name, "successfully completed")
+			messages<-fmt.Sprintln("successfully completed")
+			return
+		}
+		
+		exitError := err.(*exec.ExitError)
+		waitStatus := exitError.Sys().(syscall.WaitStatus)
+		exitCode := waitStatus.ExitStatus()
+		log.Println(p.Name, "exited with status", exitCode)
+		
+		messages<-fmt.Sprintln("exited with status", exitCode)
+	}()
 
 	go func() {
 		scanner := bufio.NewScanner(stdout)
@@ -54,7 +67,7 @@ func (p *Program) Execute() (chan string, error) {
 		}
 
 		if err := scanner.Err(); err != nil {
-			log.Println("scanner error", err)
+			log.Println(p.Name, "scanner error", err)
 		}
 	}()
 
