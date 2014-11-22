@@ -33,7 +33,7 @@ type ExecutionPageState struct {
 	ExecutionUrl string
 }
 
-func handleIndex(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+func handleIndex(dagr Dagr) http.HandlerFunc {
 	indexTemplate := template.Must(loadTemplate("index.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -44,7 +44,7 @@ func handleIndex(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func handleInfo(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+func handleInfo(dagr Dagr) http.HandlerFunc {
 	infoTemplate := template.Must(loadTemplate("info.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -92,7 +92,7 @@ func (e *Execution) BroadcastAllMessages(messages chan string) {
 	}
 }
 
-func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+func handleExecution(dagr Dagr) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]
@@ -120,7 +120,7 @@ func handleExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func showExecution(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+func showExecution(dagr Dagr) http.HandlerFunc {
 	showTemplate := template.Must(loadTemplate("show.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -163,7 +163,7 @@ func readLoop(execution *Execution, c *websocket.Conn) {
 	}
 }
 
-func handleExecutionMessages(dagr Dagr) func(http.ResponseWriter, *http.Request) {
+func handleExecutionMessages(dagr Dagr) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
