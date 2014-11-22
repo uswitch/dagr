@@ -12,7 +12,6 @@ import (
 	"text/template"
 )
 
-var staticBox = rice.MustFindBox("resources/static")
 var templatesBox = rice.MustFindBox("resources/templates")
 
 type IndexPageState struct {
@@ -126,7 +125,7 @@ func handleExecutionInfo(dagr Dagr) http.HandlerFunc {
 		executionId := vars["executionId"]
 		execution := dagr.FindExecution(executionId)
 		if execution == nil {
-			log.Println("no such execution monitor:", executionId)
+			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
 		} else {
 			executionUrl := fmt.Sprintf("/executions/%s/messages", executionId)
@@ -175,7 +174,7 @@ func handleExecutionMessages(dagr Dagr) http.HandlerFunc {
 		}
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
-		log.Println("broadcasting messages for execution monitor id:", executionId)
+		log.Println("broadcasting messages for execution id:", executionId)
 		execution := dagr.FindExecution(executionId)
 
 		execution.Subscribe(conn)
@@ -183,22 +182,12 @@ func handleExecutionMessages(dagr Dagr) http.HandlerFunc {
 	}
 }
 
-func Serve(httpAddr string, dagr Dagr) error {
-
+func DagrHandler(dagr Dagr) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex(dagr)).Methods("GET")
 	r.HandleFunc("/program/{program}", handleProgramInfo(dagr)).Methods("GET")
 	r.HandleFunc("/program/{program}/execute", handleProgramExecute(dagr)).Methods("POST")
 	r.HandleFunc("/executions/{executionId}", handleExecutionInfo(dagr)).Methods("GET")
 	r.HandleFunc("/executions/{executionId}/messages", handleExecutionMessages(dagr))
-	http.Handle("/", r)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticBox.HTTPBox())))
-
-	server := &http.Server{
-		Addr: httpAddr,
-	}
-
-	log.Println("dagr listening on", httpAddr)
-
-	return server.ListenAndServe()
+	return r
 }

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/GeertJohan/go.rice"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
+	"net/http"
 )
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
@@ -21,5 +23,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Fatal(Serve(httpAddr.String(), dagr))
+	http.Handle("/static/", http.StripPrefix("/static/",
+		http.FileServer(rice.MustFindBox("resources/static").HTTPBox())))
+	http.Handle("/", DagrHandler(dagr))
+
+	server := &http.Server{
+		Addr: httpAddr.String(),
+	}
+
+	log.Println("dagr listening on", *httpAddr)
+
+	log.Fatal(server.ListenAndServe())
 }
