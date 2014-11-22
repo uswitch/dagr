@@ -1,3 +1,5 @@
+![Dagr by Arbo](http://upload.wikimedia.org/wikipedia/commons/7/7d/Dagr_by_Arbo.jpg)
+
 dagr
 ====
 
