@@ -24,4 +24,4 @@ runs programs every day (in Norse mythology, Dagr is day personified)
 
 ## Run
 
-    $ dagr --port :8080 --repo git@github.com:company/dagr-programs --work /tmp/dagr-work
+    $ dagr --http :8080 --repo git@github.com:company/dagr-programs --work /tmp/dagr-work

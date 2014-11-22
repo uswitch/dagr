@@ -103,7 +103,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 			execution := &Execution{program: program, subscribers: make(map[*websocket.Conn]bool)}
 			dagr.AddExecution(executionId, execution)
 
-			executionMessages, err := program.Execute()
+			executionResult, err := program.Execute()
 
 			if err != nil {
 				log.Println("error on execution:", err)
@@ -111,7 +111,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 				return
 			}
 
-			go execution.BroadcastAllMessages(executionMessages)
+			go execution.BroadcastAllMessages(executionResult.Messages)
 
 			http.Redirect(w, req, "/executions/"+executionId, 302)
 		}

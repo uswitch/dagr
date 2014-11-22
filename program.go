@@ -18,13 +18,19 @@ type Program struct {
 
 const BUFFER_SIZE = 1000
 
+type ExitCode int
 const (
 	Success   = 0
 	Retryable = 1
 	Failed    = 2
 )
 
-func (p *Program) Execute() (chan string, error) {
+type ExecutionResult struct {
+	Messages chan string
+	ExitStatus chan ExitCode
+}
+
+func (p *Program) Execute() (*ExecutionResult, error) {
 	log.Println("executing", p.CommandPath)
 	cmd := exec.Command(p.CommandPath)
 
@@ -39,13 +45,16 @@ func (p *Program) Execute() (chan string, error) {
 	}
 
 	messages := make(chan string, BUFFER_SIZE)
+	exit := make(chan ExitCode)
+	
+	result := &ExecutionResult{messages, exit}
 
 	go func() {
 		log.Println(p.Name, "waiting to complete")
 		err := cmd.Wait()
 		if err == nil {
 			log.Println(p.Name, "successfully completed")
-			messages<-fmt.Sprintln("successfully completed")
+			result.Messages<-fmt.Sprintln("successfully completed")
 			return
 		}
 		
@@ -54,7 +63,8 @@ func (p *Program) Execute() (chan string, error) {
 		exitCode := waitStatus.ExitStatus()
 		log.Println(p.Name, "exited with status", exitCode)
 		
-		messages<-fmt.Sprintln("exited with status", exitCode)
+		result.Messages<-fmt.Sprintln("exited with status", exitCode)
+		result.ExitStatus<-ExitCode(exitCode)
 	}()
 
 	go func() {
@@ -63,7 +73,7 @@ func (p *Program) Execute() (chan string, error) {
 		for scanner.Scan() {
 			s := scanner.Text()
 			log.Println(p.Name, s)
-			messages <- s
+			result.Messages <- s
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -71,7 +81,7 @@ func (p *Program) Execute() (chan string, error) {
 		}
 	}()
 
-	return messages, nil
+	return result, nil
 }
 
 func readDir(dir string) ([]*Program, error) {
