@@ -111,7 +111,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 				return
 			}
 
-			go execution.BroadcastAllMessages(executionResult.Messages)
+			go execution.BroadcastAllMessages(executionResult.Stdout)
 
 			http.Redirect(w, req, "/executions/"+executionId, 302)
 		}

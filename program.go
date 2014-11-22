@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -26,8 +27,23 @@ const (
 )
 
 type ExecutionResult struct {
-	Messages chan string
+	Stdout chan string
+	Stderr chan string
 	ExitStatus chan ExitCode
+}
+
+func forwardOutput(p *Program, r io.ReadCloser, output chan string) {
+	scanner := bufio.NewScanner(r)
+
+	for scanner.Scan() {
+		s := scanner.Text()
+		log.Println(p.Name, s)
+		output <- s
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Println(p.Name, "scanner error", err)
+	}	
 }
 
 func (p *Program) Execute() (*ExecutionResult, error) {
@@ -38,23 +54,30 @@ func (p *Program) Execute() (*ExecutionResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
 
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	messages := make(chan string, BUFFER_SIZE)
+	stdoutMessages := make(chan string, BUFFER_SIZE)
+	stderrMessages := make(chan string, BUFFER_SIZE)
 	exit := make(chan ExitCode)
 	
-	result := &ExecutionResult{messages, exit}
+	result := &ExecutionResult{stdoutMessages, stderrMessages, exit}
+	go forwardOutput(p, stdout, stdoutMessages)
+	go forwardOutput(p, stderr, stderrMessages)
 
 	go func() {
 		log.Println(p.Name, "waiting to complete")
 		err := cmd.Wait()
 		if err == nil {
 			log.Println(p.Name, "successfully completed")
-			result.Messages<-fmt.Sprintln("successfully completed")
+			result.Stdout<-fmt.Sprintln("successfully completed")
 			return
 		}
 		
@@ -63,22 +86,8 @@ func (p *Program) Execute() (*ExecutionResult, error) {
 		exitCode := waitStatus.ExitStatus()
 		log.Println(p.Name, "exited with status", exitCode)
 		
-		result.Messages<-fmt.Sprintln("exited with status", exitCode)
+		result.Stdout<-fmt.Sprintln("exited with status", exitCode)
 		result.ExitStatus<-ExitCode(exitCode)
-	}()
-
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-
-		for scanner.Scan() {
-			s := scanner.Text()
-			log.Println(p.Name, s)
-			result.Messages <- s
-		}
-
-		if err := scanner.Err(); err != nil {
-			log.Println(p.Name, "scanner error", err)
-		}
 	}()
 
 	return result, nil
