@@ -19,12 +19,6 @@ type dagrState struct {
 	sync.RWMutex
 }
 
-func newDagrState() *dagrState {
-	s := &dagrState{}
-	s.executions = make(map[string]*Execution)
-	return s
-}
-
 func (this *dagrState) FindProgram(name string) *Program {
 	this.RLock()
 	defer this.RUnlock()
@@ -56,7 +50,7 @@ func (this *dagrState) AllPrograms() []*Program {
 }
 
 func MakeDagr(repo, workingDir string, delay time.Duration) (*dagrState, error) {
-	s := newDagrState()
+	s := &dagrState{executions: make(map[string]*Execution)}
 
 	err := PullOrClone(repo, workingDir)
 
@@ -64,9 +58,9 @@ func MakeDagr(repo, workingDir string, delay time.Duration) (*dagrState, error) 
 		return nil, err
 	}
 
-	sha := ""
-
 	go func() {
+		sha := ""
+
 		for {
 			defer func() {
 				time.Sleep(delay)
