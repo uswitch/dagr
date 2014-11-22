@@ -8,14 +8,12 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"regexp"
 	"sync"
 	"text/template"
 )
 
-var TMPL = regexp.MustCompile(".tmpl$")
-
-var resourceBox = rice.MustFindBox("resources")
+var staticBox = rice.MustFindBox("resources/static")
+var templatesBox = rice.MustFindBox("resources/templates")
 
 type IndexPageState struct {
 	Succeeded int
@@ -144,7 +142,7 @@ func showExecution(dagr Dagr) http.HandlerFunc {
 }
 
 func loadTemplate(path string) (*template.Template, error) {
-	templateString, err := resourceBox.String(path)
+	templateString, err := templatesBox.String(path)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +192,7 @@ func Serve(httpAddr string, dagr Dagr) error {
 	r.HandleFunc("/executions/{executionId}", showExecution(dagr)).Methods("GET")
 	r.HandleFunc("/executions/{executionId}/messages", handleExecutionMessages(dagr))
 	http.Handle("/", r)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(resourceBox.HTTPBox())))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticBox.HTTPBox())))
 
 	server := &http.Server{
 		Addr: httpAddr,
