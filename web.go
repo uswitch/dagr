@@ -42,8 +42,8 @@ func handleIndex(dagr Dagr) http.HandlerFunc {
 	}
 }
 
-func handleInfo(dagr Dagr) http.HandlerFunc {
-	infoTemplate := template.Must(loadTemplate("info.html.tmpl"))
+func handleProgramInfo(dagr Dagr) http.HandlerFunc {
+	infoTemplate := template.Must(loadTemplate("program.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -90,7 +90,7 @@ func (e *Execution) BroadcastAllMessages(messages chan string) {
 	}
 }
 
-func handleExecution(dagr Dagr) http.HandlerFunc {
+func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]
@@ -118,8 +118,8 @@ func handleExecution(dagr Dagr) http.HandlerFunc {
 	}
 }
 
-func showExecution(dagr Dagr) http.HandlerFunc {
-	showTemplate := template.Must(loadTemplate("show.html.tmpl"))
+func handleExecutionInfo(dagr Dagr) http.HandlerFunc {
+	showTemplate := template.Must(loadTemplate("execution.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -187,9 +187,9 @@ func Serve(httpAddr string, dagr Dagr) error {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex(dagr)).Methods("GET")
-	r.HandleFunc("/program/{program}", handleInfo(dagr)).Methods("GET")
-	r.HandleFunc("/program/{program}/execute", handleExecution(dagr)).Methods("POST")
-	r.HandleFunc("/executions/{executionId}", showExecution(dagr)).Methods("GET")
+	r.HandleFunc("/program/{program}", handleProgramInfo(dagr)).Methods("GET")
+	r.HandleFunc("/program/{program}/execute", handleProgramExecute(dagr)).Methods("POST")
+	r.HandleFunc("/executions/{executionId}", handleExecutionInfo(dagr)).Methods("GET")
 	r.HandleFunc("/executions/{executionId}/messages", handleExecutionMessages(dagr))
 	http.Handle("/", r)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticBox.HTTPBox())))
