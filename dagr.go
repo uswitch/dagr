@@ -63,41 +63,48 @@ func MakeDagr(repo, workingDir string, delay time.Duration) (*dagrState, error) 
 		return nil, err
 	}
 
+	getNewPrograms := func(sha string) (string, error) {
+		newSha, err := MasterSha(repo)
+
+		if err != nil {
+			return sha, err
+		}
+
+		if newSha == sha {
+			return sha, nil
+		}
+
+		err = Pull(workingDir)
+
+		if err != nil {
+			return sha, err
+		}
+
+		programs, err := readDir(workingDir)
+
+		if err != nil {
+			return sha, err
+		}
+
+		s.Lock()
+		defer s.Unlock()
+		s.programs = programs
+
+		return newSha, nil
+	}
+
 	go func() {
 		sha := ""
 
 		for {
-			defer func() {
-				time.Sleep(delay)
-			}()
-
-			newSha, err := MasterSha(repo)
+			newSha, err := getNewPrograms(sha)
+			sha = newSha
 
 			if err != nil {
-				log.Print(err)
-				continue
+				log.Println(err)
 			}
 
-			if newSha != sha {
-				err := Pull(workingDir)
-
-				if err != nil {
-					log.Print(err)
-					continue
-				}
-
-				newPrograms, err := readDir(workingDir)
-
-				if err != nil {
-					log.Print(err)
-					continue
-				}
-
-				s.Lock()
-				s.programs = newPrograms
-				s.Unlock()
-				sha = newSha
-			}
+			time.Sleep(delay)
 		}
 	}()
 
