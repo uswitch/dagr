@@ -1,7 +1,6 @@
 package main
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"fmt"
 	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
@@ -59,6 +58,7 @@ func handleProgramInfo(dagr Dagr) http.HandlerFunc {
 }
 
 type Execution struct {
+	id          string
 	program     *Program
 	subscribers map[*websocket.Conn]bool
 	sync.RWMutex
@@ -98,10 +98,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			executionId := uuid.New()
-			execution := &Execution{program: program, subscribers: make(map[*websocket.Conn]bool)}
-			dagr.AddExecution(executionId, execution)
-
+			execution := dagr.AddExecution(program)
 			executionResult, err := program.Execute()
 
 			if err != nil {
@@ -112,7 +109,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 
 			go execution.BroadcastAllMessages(executionResult.Stdout)
 
-			http.Redirect(w, req, "/executions/"+executionId, 302)
+			http.Redirect(w, req, "/executions/"+execution.id, 302)
 		}
 	}
 }

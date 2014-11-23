@@ -1,6 +1,8 @@
 package main
 
 import (
+	"code.google.com/p/go-uuid/uuid"
+	"github.com/gorilla/websocket"
 	"log"
 	"sync"
 	"time"
@@ -8,7 +10,7 @@ import (
 
 type Dagr interface {
 	AllPrograms() []*Program
-	AddExecution(string, *Execution)
+	AddExecution(*Program) *Execution
 	FindProgram(string) *Program
 	FindExecution(string) *Execution
 }
@@ -31,10 +33,13 @@ func (this *dagrState) FindProgram(name string) *Program {
 	return nil
 }
 
-func (this *dagrState) AddExecution(executionId string, execution *Execution) {
+func (this *dagrState) AddExecution(program *Program) *Execution {
 	this.Lock()
 	defer this.Unlock()
-	this.executions[executionId] = execution
+	id := uuid.New()
+	execution := &Execution{id: id, program: program, subscribers: make(map[*websocket.Conn]bool)}
+	this.executions[id] = execution
+	return execution
 }
 
 func (this *dagrState) FindExecution(executionId string) *Execution {
