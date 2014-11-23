@@ -61,3 +61,16 @@ body {
   background-color: #efefef;
   padding: 5px 0 5px 10px;
 }
+
+#messages pre .err {
+    color: #a94442;
+}
+
+#messages pre .ok {
+    font-weight: bold;
+}
+
+#messages pre .fail {
+    color: #a94442;
+    font-weight: bold;
+}

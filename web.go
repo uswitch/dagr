@@ -76,15 +76,16 @@ func (e *Execution) Unsubscribe(c *websocket.Conn) {
 	log.Println("removing subscriber")
 	delete(e.subscribers, c)
 }
-func (e *Execution) Broadcast(msg string) {
+func (e *Execution) Broadcast(msg *ExecutionMessage) {
 	e.RLock()
 	defer e.RUnlock()
 	for conn := range e.subscribers {
-		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintln(msg)))
+		conn.WriteJSON(msg)
 	}
 }
-func (e *Execution) BroadcastAllMessages(messages chan string) {
+func (e *Execution) BroadcastAll(messages chan *ExecutionMessage) {
 	for msg := range messages {
+		//log.Println("broadcasting", msg)
 		e.Broadcast(msg)
 	}
 }
@@ -98,7 +99,6 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			execution := dagr.AddExecution(program)
 			executionResult, err := program.Execute()
 
 			if err != nil {
@@ -107,7 +107,8 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 				return
 			}
 
-			go execution.BroadcastAllMessages(executionResult.Stdout)
+			execution := dagr.AddExecution(program)
+			go execution.BroadcastAll(executionResult.Messages)
 
 			http.Redirect(w, req, "/executions/"+execution.id, 302)
 		}

@@ -4,6 +4,7 @@ $(function() {
     console.log('connecting to:' + url);
     var ws = new WebSocket(url);
     ws.onmessage = function(e) {
-	      $('#messages pre').text($('#messages pre').text() + e.data);
+        var data = JSON.parse(e.data);
+        $('#messages pre').append($('<span>').addClass(data.messageType).text(data.line));
     };
 });
