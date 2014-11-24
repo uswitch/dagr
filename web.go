@@ -4,6 +4,7 @@ import (
 	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -30,11 +31,13 @@ type IndexPageState struct {
 }
 
 type ProgramPageState struct {
-	Program *Program
+	Program    *Program
+	MainSource string
 }
 
 type ExecutionPageState struct {
-	Execution *Execution
+	Execution  *Execution
+	MainSource string
 }
 
 func handleIndex(dagr Dagr) http.HandlerFunc {
@@ -113,9 +116,17 @@ func handleProgramInfo(dagr Dagr) http.HandlerFunc {
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
-		} else if err := infoTemplate.Execute(w, ProgramPageState{program}); err != nil {
-			log.Println("error when executing info template:", err)
-			http.Error(w, err.Error(), 500)
+		} else {
+			mainSource, err := ioutil.ReadFile(program.CommandPath)
+			if err != nil {
+				log.Println("error reading program source:", err)
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			if err := infoTemplate.Execute(w, ProgramPageState{program, string(mainSource)}); err != nil {
+				log.Println("error when executing program info template:", err)
+				http.Error(w, err.Error(), 500)
+			}
 		}
 	}
 }
@@ -153,8 +164,14 @@ func handleExecutionInfo(dagr Dagr) http.HandlerFunc {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
 		} else {
-			if err := showTemplate.Execute(w, ExecutionPageState{execution}); err != nil {
-				log.Println("error when executing execution template:", err)
+			mainSource, err := ioutil.ReadFile(execution.Program.CommandPath)
+			if err != nil {
+				log.Println("error reading program source:", err)
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			if err := showTemplate.Execute(w, ExecutionPageState{execution, string(mainSource)}); err != nil {
+				log.Println("error when executing execution info template:", err)
 				http.Error(w, err.Error(), 500)
 			}
 		}
