@@ -76,7 +76,9 @@
               {{end}}
               
               <td>
-                {{if not .Running}}
+                {{if .Running}}
+                <button class="pure-button pure-button-disabled">Run</button>
+                {{else}}
                 <form action="/program/{{.Program.Name}}/execute" method="post">
                   <button class="pure-button pure-button-primary">Run</button>
                 </form>
