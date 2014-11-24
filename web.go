@@ -14,6 +14,7 @@ var templatesBox = rice.MustFindBox("resources/templates")
 
 type ProgramStatus struct {
 	Program           *Program
+	LastExecution     *Execution
 	LastExecutionTime string
 	Running           bool
 	Succeeded         bool
@@ -61,23 +62,18 @@ func handleIndex(dagr Dagr) http.HandlerFunc {
 
 			if lastExecution != nil {
 				running = !lastExecution.Finished()
-			}
 
-			if lastExecution != nil && !running {
-				succeeded = lastExecution.ExitStatus() == Success
-			}
-
-			if lastExecution != nil && !running {
-				retryable = lastExecution.ExitStatus() == Retryable
-			}
-
-			if lastExecution != nil && !running {
-				failed = lastExecution.ExitStatus() == Failed
+				if !running {
+					succeeded = lastExecution.ExitStatus() == Success
+					retryable = lastExecution.ExitStatus() == Retryable
+					failed = lastExecution.ExitStatus() == Failed
+				}
 			}
 
 			programStatuses = append(programStatuses,
 				&ProgramStatus{
 					Program:           program,
+					LastExecution:     lastExecution,
 					LastExecutionTime: lastExecutionTime,
 					Running:           running,
 					Succeeded:         succeeded,

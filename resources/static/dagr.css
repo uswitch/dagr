@@ -99,3 +99,7 @@ body {
     color: #a94442;
     font-weight: bold;
 }
+
+.label a {
+    text-decoration: none
+}
