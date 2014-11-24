@@ -1,8 +1,6 @@
 package main
 
 import (
-	"code.google.com/p/go-uuid/uuid"
-	"github.com/gorilla/websocket"
 	"log"
 	"sync"
 	"time"
@@ -10,7 +8,7 @@ import (
 
 type Dagr interface {
 	AllPrograms() []*Program
-	AddExecution(*Program) *Execution
+	Execute(*Program) (*Execution, error)
 	FindProgram(string) *Program
 	FindExecution(string) *Execution
 }
@@ -19,6 +17,20 @@ type dagrState struct {
 	programs   []*Program
 	executions map[string]*Execution
 	sync.RWMutex
+}
+
+func (this *dagrState) Execute(program *Program) (*Execution, error) {
+	this.Lock()
+	defer this.Unlock()
+	execution, err := program.Execute()
+
+	if err != nil {
+		return nil, err
+	}
+
+	this.executions[execution.Id] = execution
+	go execution.BroadcastAll()
+	return execution, nil
 }
 
 func (this *dagrState) FindProgram(name string) *Program {
@@ -31,15 +43,6 @@ func (this *dagrState) FindProgram(name string) *Program {
 	}
 
 	return nil
-}
-
-func (this *dagrState) AddExecution(program *Program) *Execution {
-	this.Lock()
-	defer this.Unlock()
-	id := uuid.New()
-	execution := &Execution{id: id, program: program, subscribers: make(map[*websocket.Conn]bool)}
-	this.executions[id] = execution
-	return execution
 }
 
 func (this *dagrState) FindExecution(executionId string) *Execution {

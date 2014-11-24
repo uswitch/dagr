@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"code.google.com/p/go-uuid/uuid"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"io"
 	"io/ioutil"
 	"log"
@@ -27,35 +29,21 @@ type Program struct {
 	CommandPath string
 }
 
-type ExecutionResult struct {
-	Messages   chan *ExecutionMessage
-	ExitStatus chan ExitCode
-}
-
-type ExecutionMessage struct {
-	ProgramName string `json:"programName"`
-	MessageType string `json:"messageType"`
-	Line        string `json:"line"`
-}
-
-func forwardOutput(p *Program, messageType string, r io.Reader,
-	output chan *ExecutionMessage, finished chan interface{}) {
+func forwardOutput(execution *Execution, messageType string, r io.Reader, finished chan interface{}) {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		s := scanner.Text()
-		log.Println(p.Name, messageType, s)
-		output <- &ExecutionMessage{p.Name, messageType, s + "\n"}
+		execution.sendMessage(messageType, scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Println(p.Name, "scanner error", err)
+		log.Println(execution.Program.Name, "scanner error", err)
 	}
 
 	finished <- struct{}{}
 }
 
-func (p *Program) Execute() (*ExecutionResult, error) {
+func (p *Program) Execute() (*Execution, error) {
 
 	log.Println("executing", p.CommandPath)
 	cmd := exec.Command(p.CommandPath)
@@ -77,12 +65,18 @@ func (p *Program) Execute() (*ExecutionResult, error) {
 
 	messages := make(chan *ExecutionMessage, BUFFER_SIZE)
 	exit := make(chan ExitCode)
-	result := &ExecutionResult{messages, exit}
+	execution := &Execution{
+		Program:     p,
+		Id:          uuid.New(),
+		messages:    messages,
+		exitStatus:  exit,
+		subscribers: make(map[*websocket.Conn]bool),
+	}
 	stdoutFinished := make(chan interface{})
 	stderrFinished := make(chan interface{})
 
-	go forwardOutput(p, "out", stdout, messages, stdoutFinished)
-	go forwardOutput(p, "err", stderr, messages, stderrFinished)
+	go forwardOutput(execution, "out", stdout, stdoutFinished)
+	go forwardOutput(execution, "err", stderr, stderrFinished)
 
 	go func() {
 		defer close(messages)
@@ -98,8 +92,7 @@ func (p *Program) Execute() (*ExecutionResult, error) {
 
 		err := cmd.Wait()
 		if err == nil {
-			log.Println(p.Name, "successfully completed")
-			messages <- &ExecutionMessage{p.Name, "ok", "successfully completed"}
+			execution.sendMessage("ok", "successfully completed")
 			// missing ExitCode in this case?
 			return
 		}
@@ -109,11 +102,11 @@ func (p *Program) Execute() (*ExecutionResult, error) {
 		exitCode := waitStatus.ExitStatus()
 		log.Println(p.Name, "exited with status", exitCode)
 
-		messages <- &ExecutionMessage{p.Name, "fail", fmt.Sprintln("exited with status", exitCode)}
+		execution.sendMessage("fail", fmt.Sprintln("exited with status", exitCode))
 		exit <- ExitCode(exitCode)
 	}()
 
-	return result, nil
+	return execution, nil
 }
 
 func readDir(dir string) ([]*Program, error) {

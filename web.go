@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"sync"
+	"strconv"
 	"text/template"
 )
 
@@ -25,8 +24,7 @@ type InfoPageState struct {
 }
 
 type ExecutionPageState struct {
-	Program      *Program
-	ExecutionUrl string
+	Execution *Execution
 }
 
 func handleIndex(dagr Dagr) http.HandlerFunc {
@@ -57,39 +55,6 @@ func handleProgramInfo(dagr Dagr) http.HandlerFunc {
 	}
 }
 
-type Execution struct {
-	id          string
-	program     *Program
-	subscribers map[*websocket.Conn]bool
-	sync.RWMutex
-}
-
-func (e *Execution) Subscribe(c *websocket.Conn) {
-	e.Lock()
-	defer e.Unlock()
-	log.Println("adding subscriber")
-	e.subscribers[c] = true
-}
-func (e *Execution) Unsubscribe(c *websocket.Conn) {
-	e.Lock()
-	defer e.Unlock()
-	log.Println("removing subscriber")
-	delete(e.subscribers, c)
-}
-func (e *Execution) Broadcast(msg *ExecutionMessage) {
-	e.RLock()
-	defer e.RUnlock()
-	for conn := range e.subscribers {
-		conn.WriteJSON(msg)
-	}
-}
-func (e *Execution) BroadcastAll(messages chan *ExecutionMessage) {
-	for msg := range messages {
-		//log.Println("broadcasting", msg)
-		e.Broadcast(msg)
-	}
-}
-
 func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -99,7 +64,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			executionResult, err := program.Execute()
+			execution, err := dagr.Execute(program)
 
 			if err != nil {
 				log.Println("error on execution:", err)
@@ -107,10 +72,7 @@ func handleProgramExecute(dagr Dagr) http.HandlerFunc {
 				return
 			}
 
-			execution := dagr.AddExecution(program)
-			go execution.BroadcastAll(executionResult.Messages)
-
-			http.Redirect(w, req, "/executions/"+execution.id, 302)
+			http.Redirect(w, req, "/executions/"+execution.Id, 302)
 		}
 	}
 }
@@ -126,11 +88,7 @@ func handleExecutionInfo(dagr Dagr) http.HandlerFunc {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
 		} else {
-			executionUrl := fmt.Sprintf("/executions/%s/messages", executionId)
-			log.Println("socket path:", executionUrl)
-			// executionUrl := "ws://localhost:8080/executions/" + executionId + "/messages"
-
-			if err := showTemplate.Execute(w, ExecutionPageState{execution.program, executionUrl}); err != nil {
+			if err := showTemplate.Execute(w, ExecutionPageState{execution}); err != nil {
 				log.Println("error when executing execution template:", err)
 				http.Error(w, err.Error(), 500)
 			}
@@ -172,10 +130,20 @@ func handleExecutionMessages(dagr Dagr) http.HandlerFunc {
 		}
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
-		log.Println("broadcasting messages for execution id:", executionId)
+		log.Println("subscribing to messages for execution id:", executionId)
 		execution := dagr.FindExecution(executionId)
-
 		execution.Subscribe(conn)
+		countSoFarStr := vars["countSoFar"]
+		countSoFar, err := strconv.Atoi(countSoFarStr)
+		if err != nil {
+			log.Println("countSoFar not an integer?", countSoFarStr, err)
+		} else {
+			messagesCaughtUp := execution.CatchUp(conn, countSoFar)
+			if messagesCaughtUp > 0 {
+				log.Println("caught up", messagesCaughtUp, "message(s)")
+			}
+		}
+
 		go readLoop(execution, conn)
 	}
 }
@@ -186,6 +154,6 @@ func DagrHandler(dagr Dagr) http.Handler {
 	r.HandleFunc("/program/{program}", handleProgramInfo(dagr)).Methods("GET")
 	r.HandleFunc("/program/{program}/execute", handleProgramExecute(dagr)).Methods("POST")
 	r.HandleFunc("/executions/{executionId}", handleExecutionInfo(dagr)).Methods("GET")
-	r.HandleFunc("/executions/{executionId}/messages", handleExecutionMessages(dagr))
+	r.HandleFunc("/executions/{executionId}/messages/{countSoFar:[0-9]+}", handleExecutionMessages(dagr))
 	return r
 }
