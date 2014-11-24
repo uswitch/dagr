@@ -29,6 +29,7 @@ type ExitCode int
 type Program struct {
 	Name        string
 	CommandPath string
+	MainSource  string
 	executions  []*Execution
 	sync.RWMutex
 }
@@ -150,9 +151,16 @@ func readDir(dir string) ([]*Program, error) {
 		_, err := os.Stat(commandPath)
 
 		if err == nil {
-			log.Println("program executable:", commandPath)
+			mainSource, err := ioutil.ReadFile(commandPath)
 
-			programs = append(programs, &Program{Name: info.Name(), CommandPath: commandPath})
+			if err == nil {
+				log.Println("program executable:", commandPath)
+				programs = append(programs, &Program{
+					Name:        info.Name(),
+					CommandPath: commandPath,
+					MainSource:  string(mainSource),
+				})
+			}
 		}
 	}
 

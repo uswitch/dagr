@@ -24,7 +24,7 @@
       </div>
 
       <div class="source">
-        <pre><code>{{.MainSource}}</code></pre>
+        <pre><code>{{.Execution.Program.MainSource}}</code></pre>
       </div>
       
       <div id="messages" data-exec-url="/executions/{{.Execution.Id}}/messages/{{.Execution.RecordedMessages|len}}">
