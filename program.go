@@ -93,20 +93,34 @@ func (p *Program) Execute() (*Execution, error) {
 		err := cmd.Wait()
 		if err == nil {
 			execution.sendMessage("ok", "successfully completed")
-			// missing ExitCode in this case?
+			exit <- ExitCode(0)
 			return
 		}
 
-		exitError := err.(*exec.ExitError)
-		waitStatus := exitError.Sys().(syscall.WaitStatus)
-		exitCode := waitStatus.ExitStatus()
-		log.Println(p.Name, "exited with status", exitCode)
+		exitCode, err := extractExitCode(err)
 
-		execution.sendMessage("fail", fmt.Sprintln("exited with status", exitCode))
+		if err != nil {
+			log.Println(p.Name, "failed to run", err)
+			execution.sendMessage("fail", fmt.Sprint("failed to run ", err))
+			exit <- ExitCode(-1) //?
+			return
+		}
+
+		log.Println(p.Name, "exited with status", exitCode)
+		execution.sendMessage("fail", fmt.Sprint("exited with status ", exitCode))
 		exit <- ExitCode(exitCode)
 	}()
 
 	return execution, nil
+}
+
+func extractExitCode(err error) (ExitCode, error) {
+	switch ex := err.(type) {
+	case *exec.ExitError:
+		return ExitCode(ex.Sys().(syscall.WaitStatus).ExitStatus()), nil // assume Unix
+	default:
+		return 0, err
+	}
 }
 
 func readDir(dir string) ([]*Program, error) {
