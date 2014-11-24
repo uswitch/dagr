@@ -132,19 +132,24 @@ func handleExecutionMessages(dagr Dagr) http.HandlerFunc {
 		executionId := vars["executionId"]
 		log.Println("subscribing to messages for execution id:", executionId)
 		execution := dagr.FindExecution(executionId)
-		execution.Subscribe(conn)
-		countSoFarStr := vars["countSoFar"]
-		countSoFar, err := strconv.Atoi(countSoFarStr)
-		if err != nil {
-			log.Println("countSoFar not an integer?", countSoFarStr, err)
+		if execution == nil {
+			log.Println("no such execution:", executionId)
+			http.NotFound(w, req)
 		} else {
-			messagesCaughtUp := execution.CatchUp(conn, countSoFar)
-			if messagesCaughtUp > 0 {
-				log.Println("caught up", messagesCaughtUp, "message(s)")
+			execution.Subscribe(conn)
+			countSoFarStr := vars["countSoFar"]
+			countSoFar, err := strconv.Atoi(countSoFarStr)
+			if err != nil {
+				log.Println("countSoFar not an integer?", countSoFarStr, err)
+			} else {
+				messagesCaughtUp := execution.CatchUp(conn, countSoFar)
+				if messagesCaughtUp > 0 {
+					log.Println("caught up", messagesCaughtUp, "message(s)")
+				}
 			}
-		}
 
-		go readLoop(execution, conn)
+			go readLoop(execution, conn)
+		}
 	}
 }
 
