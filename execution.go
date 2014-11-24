@@ -4,14 +4,17 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"sync"
+	"time"
 )
 
 type Execution struct {
 	Program          *Program
 	Id               string
+	StartTime        time.Time
 	recordedMessages []*ExecutionMessage
 	messages         chan *ExecutionMessage
-	exitStatus       chan ExitCode
+	finished         bool
+	exitStatus       ExitCode
 	subscribers      map[*websocket.Conn]bool
 	sync.RWMutex
 }
@@ -22,7 +25,7 @@ type ExecutionMessage struct {
 	Line        string `json:"line"`
 }
 
-func (e *Execution) sendMessage(messageType, message string) {
+func (e *Execution) SendMessage(messageType, message string) {
 	e.Lock()
 	defer e.Unlock()
 	executionMessage := &ExecutionMessage{e.Program.Name, messageType, message + "\n"}
@@ -35,6 +38,25 @@ func (e *Execution) RecordedMessages() []*ExecutionMessage {
 	e.RLock()
 	defer e.RUnlock()
 	return e.recordedMessages
+}
+
+func (e *Execution) Finished() bool {
+	e.RLock()
+	defer e.RUnlock()
+	return e.finished
+}
+
+func (e *Execution) ExitStatus() ExitCode {
+	e.RLock()
+	defer e.RUnlock()
+	return e.exitStatus
+}
+
+func (e *Execution) Finish(exitStatus ExitCode) {
+	e.Lock()
+	defer e.Unlock()
+	e.finished = true
+	e.exitStatus = exitStatus
 }
 
 func (e *Execution) CatchUp(conn *websocket.Conn, countSoFar int) int {

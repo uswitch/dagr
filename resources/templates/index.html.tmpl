@@ -44,23 +44,43 @@
           </thead>
           
           <tbody>
-{{ range .Programs }}
+{{range .ProgramStatuses}}
             <tr>
               <td class="program-name table-1-3">
-                <a href="/program/{{.Name}}">{{.Name}}</a>
+                <a href="/program/{{.Program.Name}}">{{.Program.Name}}</a>
               </td>
-              <td class="table-1-3">28th Jan 2014 18:00</td>
+              <td class="table-1-3">{{with .LastExecutionTime}}{{.}}{{else}}Never run{{end}}</td>
+              {{if .Succeeded}}
               <td class="execution-status-success">
                 <div class="succeeded">Succeeded</div>
               </td>
+              {{else if .Failed}}
+              <td class="execution-status-failed">
+                <div class="failed">Failed</div>
+              </td>
+              {{else if .Retryable}}
+              <td class="execution-status-retryable">
+                <div class="retryable">Retryable</div>
+              </td>
+              {{else if .Running}}
+              <td class="execution-status-running">
+                <div class="running">Running</div>
+              </td>
+              {{else}}
               <td>
-                <form action="/program/{{.Name}}/execute" method="post">
+                {{/* never run */}}
+              </td>
+              {{end}}
+              
+              <td>
+                {{if not .Running}}
+                <form action="/program/{{.Program.Name}}/execute" method="post">
                   <button class="pure-button pure-button-primary">Run</button>
                 </form>
+                {{end}}
               </td>
             </tr>
-{{ end }}
-
+{{end}}
           </tbody>
         </table>
       </div>

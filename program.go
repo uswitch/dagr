@@ -11,7 +11,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"syscall"
+	"time"
 )
 
 const BUFFER_SIZE = 1000
@@ -27,13 +29,15 @@ type ExitCode int
 type Program struct {
 	Name        string
 	CommandPath string
+	executions  []*Execution
+	sync.RWMutex
 }
 
 func forwardOutput(execution *Execution, messageType string, r io.Reader, finished chan interface{}) {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
-		execution.sendMessage(messageType, scanner.Text())
+		execution.SendMessage(messageType, scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -44,6 +48,8 @@ func forwardOutput(execution *Execution, messageType string, r io.Reader, finish
 }
 
 func (p *Program) Execute() (*Execution, error) {
+	p.Lock()
+	defer p.Unlock()
 
 	log.Println("executing", p.CommandPath)
 	cmd := exec.Command(p.CommandPath)
@@ -64,12 +70,11 @@ func (p *Program) Execute() (*Execution, error) {
 	}
 
 	messages := make(chan *ExecutionMessage, BUFFER_SIZE)
-	exit := make(chan ExitCode)
 	execution := &Execution{
 		Program:     p,
 		Id:          uuid.New(),
+		StartTime:   time.Now(),
 		messages:    messages,
-		exitStatus:  exit,
 		subscribers: make(map[*websocket.Conn]bool),
 	}
 	stdoutFinished := make(chan interface{})
@@ -92,8 +97,8 @@ func (p *Program) Execute() (*Execution, error) {
 
 		err := cmd.Wait()
 		if err == nil {
-			execution.sendMessage("ok", "successfully completed")
-			exit <- ExitCode(0)
+			execution.SendMessage("ok", "successfully completed")
+			execution.Finish(ExitCode(0))
 			return
 		}
 
@@ -101,17 +106,25 @@ func (p *Program) Execute() (*Execution, error) {
 
 		if err != nil {
 			log.Println(p.Name, "failed to run", err)
-			execution.sendMessage("fail", fmt.Sprint("failed to run ", err))
-			exit <- ExitCode(-1) //?
+			execution.SendMessage("fail", fmt.Sprint("failed to run ", err))
+			execution.Finish(ExitCode(-1)) //?
 			return
 		}
 
 		log.Println(p.Name, "exited with status", exitCode)
-		execution.sendMessage("fail", fmt.Sprint("exited with status ", exitCode))
-		exit <- ExitCode(exitCode)
+		execution.SendMessage("fail", fmt.Sprint("exited with status ", exitCode))
+		execution.Finish(exitCode)
 	}()
 
+	p.executions = append(p.executions, execution)
+
 	return execution, nil
+}
+
+func (p *Program) Executions() []*Execution {
+	p.RLock()
+	defer p.RUnlock()
+	return p.executions
 }
 
 func extractExitCode(err error) (ExitCode, error) {
@@ -139,7 +152,7 @@ func readDir(dir string) ([]*Program, error) {
 		if err == nil {
 			log.Println("program executable:", commandPath)
 
-			programs = append(programs, &Program{info.Name(), commandPath})
+			programs = append(programs, &Program{Name: info.Name(), CommandPath: commandPath})
 		}
 	}
 

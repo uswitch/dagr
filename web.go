@@ -12,11 +12,20 @@ import (
 
 var templatesBox = rice.MustFindBox("resources/templates")
 
+type ProgramStatus struct {
+	Program           *Program
+	LastExecutionTime string
+	Running           bool
+	Succeeded         bool
+	Failed            bool
+	Retryable         bool
+}
+
 type IndexPageState struct {
-	Succeeded int
-	Retryable int
-	Failed    int
-	Programs  []*Program
+	Succeeded       int
+	Retryable       int
+	Failed          int
+	ProgramStatuses []*ProgramStatus
 }
 
 type ProgramPageState struct {
@@ -31,7 +40,67 @@ func handleIndex(dagr Dagr) http.HandlerFunc {
 	indexTemplate := template.Must(loadTemplate("index.html.tmpl"))
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		if err := indexTemplate.Execute(w, IndexPageState{77, 13, 12, dagr.AllPrograms()}); err != nil {
+		programs := dagr.AllPrograms()
+		programStatuses := []*ProgramStatus{}
+
+		var totalSucceeded, totalFailed, totalRetryable int
+
+		for _, program := range programs {
+			executions := program.Executions()
+			var lastExecution *Execution
+			var lastExecutionTime string
+			if len(executions) == 0 {
+				lastExecution = nil
+				lastExecutionTime = ""
+			} else {
+				lastExecution = executions[len(executions)-1]
+				lastExecutionTime = lastExecution.StartTime.Format("2 Jan 2006 15:04")
+			}
+
+			var running, succeeded, retryable, failed bool
+
+			if lastExecution != nil {
+				running = !lastExecution.Finished()
+			}
+
+			if lastExecution != nil && !running {
+				succeeded = lastExecution.ExitStatus() == Success
+			}
+
+			if lastExecution != nil && !running {
+				retryable = lastExecution.ExitStatus() == Retryable
+			}
+
+			if lastExecution != nil && !running {
+				failed = lastExecution.ExitStatus() == Failed
+			}
+
+			programStatuses = append(programStatuses,
+				&ProgramStatus{
+					Program:           program,
+					LastExecutionTime: lastExecutionTime,
+					Running:           running,
+					Succeeded:         succeeded,
+					Retryable:         retryable,
+					Failed:            failed,
+				})
+
+			if succeeded {
+				totalSucceeded++
+			}
+
+			if retryable {
+				totalRetryable++
+			}
+
+			if failed {
+				totalFailed++
+			}
+		}
+
+		err := indexTemplate.Execute(w, IndexPageState{totalSucceeded, totalRetryable, totalFailed, programStatuses})
+
+		if err != nil {
 			log.Println("error when executing index template:", err)
 			http.Error(w, err.Error(), 500)
 		}

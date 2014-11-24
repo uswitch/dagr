@@ -44,12 +44,37 @@ body {
 #programs th {
     border-left: none;
 }
+
 .succeeded {
     display: inline;
     background-color: #dff0d8;
     padding: 5px;
     border-radius: 5px;
     color: #3c763d;
+}
+
+.failed {
+    display: inline;
+    background-color: #f2dede;
+    padding: 5px;
+    border-radius: 5px;
+    color: #a94442;
+}
+
+.retryable {
+    display: inline;
+    background-color: #fcf8e3;
+    padding: 5px;
+    border-radius: 5px;
+    color: #8a6d3b;
+}
+
+.running {
+    display: inline;
+    background-color: #ebebeb;
+    padding: 5px;
+    border-radius: 5px;
+    color: black;
 }
 
 .table-1-3 {
