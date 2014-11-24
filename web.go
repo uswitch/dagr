@@ -19,7 +19,7 @@ type IndexPageState struct {
 	Programs  []*Program
 }
 
-type InfoPageState struct {
+type ProgramPageState struct {
 	Program *Program
 }
 
@@ -48,7 +48,7 @@ func handleProgramInfo(dagr Dagr) http.HandlerFunc {
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
-		} else if err := infoTemplate.Execute(w, InfoPageState{program}); err != nil {
+		} else if err := infoTemplate.Execute(w, ProgramPageState{program}); err != nil {
 			log.Println("error when executing info template:", err)
 			http.Error(w, err.Error(), 500)
 		}
