@@ -50,10 +50,7 @@ func handleIndex(dagr Dagr) http.HandlerFunc {
 			executions := program.Executions()
 			var lastExecution *Execution
 			var lastExecutionTime string
-			if len(executions) == 0 {
-				lastExecution = nil
-				lastExecutionTime = ""
-			} else {
+			if len(executions) > 0 {
 				lastExecution = executions[len(executions)-1]
 				lastExecutionTime = lastExecution.StartTime.Format("2 Jan 2006 15:04")
 			}
