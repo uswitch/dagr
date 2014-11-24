@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"code.google.com/p/go-uuid/uuid"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,7 +11,6 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
-	"time"
 )
 
 const BUFFER_SIZE = 1000
@@ -71,13 +68,7 @@ func (p *Program) Execute() (*Execution, error) {
 	}
 
 	messages := make(chan *ExecutionMessage, BUFFER_SIZE)
-	execution := &Execution{
-		Program:     p,
-		Id:          uuid.New(),
-		StartTime:   time.Now(),
-		messages:    messages,
-		subscribers: make(map[*websocket.Conn]bool),
-	}
+	execution := NewExecution(p, messages)
 	stdoutFinished := make(chan interface{})
 	stderrFinished := make(chan interface{})
 

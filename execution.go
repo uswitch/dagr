@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/gorilla/websocket"
 	"log"
 	"sync"
@@ -23,6 +24,16 @@ type ExecutionMessage struct {
 	ProgramName string `json:"programName"`
 	MessageType string `json:"messageType"`
 	Line        string `json:"line"`
+}
+
+func NewExecution(p *Program, messages chan *ExecutionMessage) *Execution {
+	return &Execution{
+		Program:     p,
+		Id:          uuid.New(),
+		StartTime:   time.Now(),
+		messages:    messages,
+		subscribers: make(map[*websocket.Conn]bool),
+	}
 }
 
 func (e *Execution) SendMessage(messageType, message string) {
