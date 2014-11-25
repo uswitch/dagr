@@ -71,7 +71,7 @@ func (e *Executor) RunExecutorLoop() {
 		log.Println("got an execution request")
 		execution, err := e.doExecute(er)
 		if err == nil {
-			e.executions <- execution
+			//e.executions <- execution // nothing is listening to this yet?
 			e.recordedExecutions[execution.Id] = execution
 		} else {
 			log.Println(err)
