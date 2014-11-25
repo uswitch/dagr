@@ -114,8 +114,6 @@ func (p *Program) Execute() (*Execution, error) {
 }
 
 func (p *Program) Executions() []*Execution {
-	p.RLock()
-	defer p.RUnlock()
 	return p.executions
 }
 

@@ -54,20 +54,14 @@ func (e *Execution) SendMessage(messageType, message string) {
 }
 
 func (e *Execution) RecordedMessages() []*executionMessage {
-	e.RLock()
-	defer e.RUnlock()
 	return e.recordedMessages
 }
 
 func (e *Execution) Finished() bool {
-	e.RLock()
-	defer e.RUnlock()
 	return e.finished
 }
 
 func (e *Execution) ExitStatus() ExitCode {
-	e.RLock()
-	defer e.RUnlock()
 	return e.exitStatus
 }
 
@@ -80,8 +74,6 @@ func (e *Execution) Finish(exitStatus ExitCode) {
 }
 
 func (e *Execution) Duration() time.Duration {
-	e.RLock()
-	defer e.RUnlock()
 	return e.duration
 }
 
@@ -101,15 +93,11 @@ func (e *Execution) CatchUp(conn *websocket.Conn, countSoFar int) int {
 }
 
 func (e *Execution) Subscribe(c *websocket.Conn) {
-	e.Lock()
-	defer e.Unlock()
 	log.Println("adding subscriber")
 	e.subscribers[c] = true
 }
 
 func (e *Execution) Unsubscribe(c *websocket.Conn) {
-	e.Lock()
-	defer e.Unlock()
 	log.Println("removing subscriber")
 	delete(e.subscribers, c)
 }
