@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/uswitch/dagr/dagrpkg"
+	dagr "github.com/uswitch/dagr/dagrpkg"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
@@ -13,7 +13,7 @@ type programPageState struct {
 	Program *program.Program
 }
 
-func handleProgramInfo(dagr dagrpkg.Dagr, infoTemplate *template.Template) http.HandlerFunc {
+func handleProgramInfo(dagr dagr.Dagr, infoTemplate *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]

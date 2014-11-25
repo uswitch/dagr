@@ -3,12 +3,12 @@ package web
 import (
 	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
-	"github.com/uswitch/dagr/dagrpkg"
+	dagr "github.com/uswitch/dagr/dagrpkg"
 	"net/http"
 	"text/template"
 )
 
-func DagrHandler(dagr dagrpkg.Dagr, templates *rice.Box) http.Handler {
+func DagrHandler(dagr dagr.Dagr, templates *rice.Box) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex(dagr, loadTemplate(templates, "index.html.tmpl"))).Methods("GET")
 	r.HandleFunc("/program/{program}", handleProgramInfo(dagr, loadTemplate(templates, "program.html.tmpl"))).Methods("GET")

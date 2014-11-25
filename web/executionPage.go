@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/uswitch/dagr/dagrpkg"
+	dagr "github.com/uswitch/dagr/dagrpkg"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
@@ -13,7 +13,7 @@ type executionPageState struct {
 	Execution *program.Execution
 }
 
-func handleExecutionInfo(dagr dagrpkg.Dagr, showTemplate *template.Template) http.HandlerFunc {
+func handleExecutionInfo(dagr dagr.Dagr, showTemplate *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]

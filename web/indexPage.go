@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/uswitch/dagr/dagrpkg"
+	dagr "github.com/uswitch/dagr/dagrpkg"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
@@ -25,7 +25,7 @@ type indexPageState struct {
 	ProgramStatuses []*programStatus
 }
 
-func handleIndex(dagr dagrpkg.Dagr, indexTemplate *template.Template) http.HandlerFunc {
+func handleIndex(dagr dagr.Dagr, indexTemplate *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		programs := dagr.Programs()
 		programStatuses := []*programStatus{}

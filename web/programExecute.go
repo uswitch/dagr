@@ -2,12 +2,12 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/uswitch/dagr/dagrpkg"
+	dagr "github.com/uswitch/dagr/dagrpkg"
 	"log"
 	"net/http"
 )
 
-func handleProgramExecute(dagr dagrpkg.Dagr) http.HandlerFunc {
+func handleProgramExecute(dagr dagr.Dagr) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]

@@ -3,14 +3,14 @@ package web
 import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/uswitch/dagr/dagrpkg"
+	dagr "github.com/uswitch/dagr/dagrpkg"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-func handleExecutionMessages(dagr dagrpkg.Dagr) http.HandlerFunc {
+func handleExecutionMessages(dagr dagr.Dagr) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
