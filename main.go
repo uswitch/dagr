@@ -36,7 +36,7 @@ func main() {
 
 	log.Println("dagr listening on", *httpAddr)
 
-	app.Run()
+	app.Run(*monitorInterval)
 
 	log.Fatal(server.ListenAndServe())
 }

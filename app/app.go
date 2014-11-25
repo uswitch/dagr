@@ -11,6 +11,7 @@ type App interface {
 	Programs() []*program.Program
 	FindProgram(string) *program.Program
 	FindExecution(string) *program.Execution
+	Run(time.Duration)
 }
 
 type appState struct {
@@ -19,8 +20,7 @@ type appState struct {
 }
 
 func (a *appState) Execute(p *program.Program) (*program.Execution, error) {
-	execution, err := a.executor.Execute(p)
-	return execution, err
+	return a.executor.Execute(p)
 }
 
 func (a *appState) FindExecution(executionId string) *program.Execution {
@@ -35,7 +35,7 @@ func (a *appState) Programs() []*program.Program {
 	return a.repository.Programs()
 }
 
-func New(repo, workingDir string, delay time.Duration) (*appState, error) {
+func New(repo, workingDir string) (*appState, error) {
 	executor := scheduler.NewExecutor()
 	repository, err := program.NewRepository(repo, workingDir)
 
@@ -46,8 +46,8 @@ func New(repo, workingDir string, delay time.Duration) (*appState, error) {
 	return &appState{executor: executor, repository: repository}, nil
 }
 
-func (a *appState) Run() {
+func (a *appState) Run(repositoryCheckInterval time.Duration) {
 	go a.executor.RunExecutorLoop()
-	go a.repository.RunRefreshLoop(time.Tick(60 * time.Second))
+	go a.repository.RunRefreshLoop(time.Tick(repositoryCheckInterval))
 	go scheduler.RunScheduleLoop(a.repository, a.executor, time.Tick(1*time.Second))
 }
