@@ -8,7 +8,7 @@ import (
 
 func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <-chan time.Time) {
 	for now := range ticks {
-		for _, p := range SelectExecutablePrograms(repository.Programs(), now) {
+		for _, p := range selectExecutablePrograms(repository.Programs(), now) {
 			log.Println("scheduling execution of", p.Name)
 			executor.Execute(p)
 			log.Println("done")
@@ -16,7 +16,7 @@ func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <
 	}
 }
 
-func SelectExecutablePrograms(programs []*program.Program, instant time.Time) []*program.Program {
+func selectExecutablePrograms(programs []*program.Program, instant time.Time) []*program.Program {
 	readyPrograms := []*program.Program{}
 
 	for _, p := range programs {
