@@ -6,7 +6,7 @@ import (
 )
 
 type Executor struct {
-	programs           chan *executionRequest
+	executionRequests  chan *executionRequest
 	executions         chan *program.Execution
 	recordedExecutions map[string]*program.Execution
 }
@@ -30,28 +30,41 @@ func (e *Executor) FindExecution(executionId string) *program.Execution {
 }
 
 func (e *Executor) doExecute(er *executionRequest) (*program.Execution, error) {
+	log.Println("executing", er.program.Name)
+
 	execution, err := er.program.Execute()
 
+	log.Println(er.program.Name, "executed")
+
 	if err != nil {
+		log.Println("execution error", err)
 		er.result <- &executionResult{nil, err}
 		// record error as well?
 		return nil, err
 	}
 
+	log.Println("execution ok -- sending result to channel")
 	er.result <- &executionResult{execution, nil}
+
+	log.Println("result sent")
 	e.recordedExecutions[execution.Id] = execution
 	return execution, nil
 }
 
 func (e *Executor) Execute(p *program.Program) (*program.Execution, error) {
 	ch := make(chan *executionResult)
-	e.programs <- &executionRequest{p, ch}
+	log.Println("sending execution request for program", p.Name)
+	e.executionRequests <- &executionRequest{p, ch}
+	log.Println("request sent -- awaiting result")
 	result := <-ch
+	log.Println("got result")
 	return result.execution, result.err
 }
 
 func (e *Executor) RunExecutorLoop() {
-	for er := range e.programs {
+	log.Println("running executor loop")
+	for er := range e.executionRequests {
+		log.Println("got an execution request")
 		execution, err := e.doExecute(er)
 		if err == nil {
 			e.executions <- execution

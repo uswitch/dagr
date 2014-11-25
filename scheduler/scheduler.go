@@ -11,6 +11,7 @@ func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <
 		for _, p := range SelectExecutablePrograms(repository.Programs(), now) {
 			log.Println("scheduling execution of", p.Name)
 			executor.Execute(p)
+			log.Println("done")
 		}
 	}
 }

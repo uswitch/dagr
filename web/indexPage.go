@@ -1,7 +1,7 @@
 package web
 
 import (
-	app "github.com/uswitch/dagr/app"
+	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
