@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/GeertJohan/go.rice"
-	dagr "github.com/uswitch/dagr/dagrpkg"
+	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/web"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
@@ -19,7 +19,7 @@ var monitorInterval = kingpin.Flag("interval", "interval between checks for new 
 func main() {
 	kingpin.Parse()
 
-	dagr, err := dagr.New(*programsRepo, *workingDir, *monitorInterval)
+	app, err := app.New(*programsRepo, *workingDir, *monitorInterval)
 
 	if err != nil {
 		log.Fatal(err)
@@ -27,7 +27,7 @@ func main() {
 
 	http.Handle("/static/", http.StripPrefix("/static/",
 		http.FileServer(rice.MustFindBox("resources/static").HTTPBox())))
-	http.Handle("/", web.DagrHandler(dagr, rice.MustFindBox("resources/templates")))
+	http.Handle("/", web.DagrHandler(app, rice.MustFindBox("resources/templates")))
 
 	server := &http.Server{
 		Addr: httpAddr.String(),
@@ -35,7 +35,7 @@ func main() {
 
 	log.Println("dagr listening on", *httpAddr)
 
-	dagr.Run()
+	app.Run()
 
 	log.Fatal(server.ListenAndServe())
 }

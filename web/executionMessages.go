@@ -3,14 +3,14 @@ package web
 import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	dagr "github.com/uswitch/dagr/dagrpkg"
+	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
 	"strconv"
 )
 
-func handleExecutionMessages(dagr dagr.Dagr) http.HandlerFunc {
+func handleExecutionMessages(app app.App) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -25,7 +25,7 @@ func handleExecutionMessages(dagr dagr.Dagr) http.HandlerFunc {
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
 		log.Println("subscribing to messages for execution id:", executionId)
-		execution := dagr.FindExecution(executionId)
+		execution := app.FindExecution(executionId)
 		if execution == nil {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)

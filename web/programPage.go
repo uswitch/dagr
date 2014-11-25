@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	dagr "github.com/uswitch/dagr/dagrpkg"
+	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
@@ -13,11 +13,11 @@ type programPageState struct {
 	Program *program.Program
 }
 
-func handleProgramInfo(dagr dagr.Dagr, infoTemplate *template.Template) http.HandlerFunc {
+func handleProgramInfo(app app.App, infoTemplate *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]
-		program := dagr.FindProgram(programName)
+		program := app.FindProgram(programName)
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)

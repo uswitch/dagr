@@ -2,21 +2,21 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	dagr "github.com/uswitch/dagr/dagrpkg"
+	"github.com/uswitch/dagr/app"
 	"log"
 	"net/http"
 )
 
-func handleProgramExecute(dagr dagr.Dagr) http.HandlerFunc {
+func handleProgramExecute(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		programName := vars["program"]
-		program := dagr.FindProgram(programName)
+		program := app.FindProgram(programName)
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			execution, err := dagr.Execute(program)
+			execution, err := app.Execute(program)
 
 			if err != nil {
 				log.Println("error on execution:", err)

@@ -2,7 +2,7 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	dagr "github.com/uswitch/dagr/dagrpkg"
+	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
@@ -13,11 +13,11 @@ type executionPageState struct {
 	Execution *program.Execution
 }
 
-func handleExecutionInfo(dagr dagr.Dagr, showTemplate *template.Template) http.HandlerFunc {
+func handleExecutionInfo(app app.App, showTemplate *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
-		execution := dagr.FindExecution(executionId)
+		execution := app.FindExecution(executionId)
 		if execution == nil {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
