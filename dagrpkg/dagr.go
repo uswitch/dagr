@@ -1,25 +1,27 @@
-package main
+package dagrpkg
 
 import (
+	"github.com/uswitch/dagr/git"
+	"github.com/uswitch/dagr/program"
 	"log"
 	"sync"
 	"time"
 )
 
 type Dagr interface {
-	AllPrograms() []*Program
-	Execute(*Program) (*Execution, error)
-	FindProgram(string) *Program
-	FindExecution(string) *Execution
+	Programs() []*program.Program
+	Execute(*program.Program) (*program.Execution, error)
+	FindProgram(string) *program.Program
+	FindExecution(string) *program.Execution
 }
 
 type dagrState struct {
-	programs   []*Program
-	executions map[string]*Execution
+	programs   []*program.Program
+	executions map[string]*program.Execution
 	sync.RWMutex
 }
 
-func (this *dagrState) Execute(program *Program) (*Execution, error) {
+func (this *dagrState) Execute(program *program.Program) (*program.Execution, error) {
 	this.Lock()
 	defer this.Unlock()
 	execution, err := program.Execute()
@@ -29,11 +31,10 @@ func (this *dagrState) Execute(program *Program) (*Execution, error) {
 	}
 
 	this.executions[execution.Id] = execution
-	go execution.BroadcastAll()
 	return execution, nil
 }
 
-func (this *dagrState) FindProgram(name string) *Program {
+func (this *dagrState) FindProgram(name string) *program.Program {
 	this.RLock()
 	defer this.RUnlock()
 	for _, program := range this.programs {
@@ -45,29 +46,29 @@ func (this *dagrState) FindProgram(name string) *Program {
 	return nil
 }
 
-func (this *dagrState) FindExecution(executionId string) *Execution {
+func (this *dagrState) FindExecution(executionId string) *program.Execution {
 	this.RLock()
 	defer this.RUnlock()
 	return this.executions[executionId]
 }
 
-func (this *dagrState) AllPrograms() []*Program {
+func (this *dagrState) Programs() []*program.Program {
 	this.RLock()
 	defer this.RUnlock()
 	return this.programs
 }
 
-func MakeDagr(repo, workingDir string, delay time.Duration) (*dagrState, error) {
-	s := &dagrState{executions: make(map[string]*Execution)}
+func New(repo, workingDir string, delay time.Duration) (*dagrState, error) {
+	s := &dagrState{executions: make(map[string]*program.Execution)}
 
-	err := PullOrClone(repo, workingDir)
+	err := git.PullOrClone(repo, workingDir)
 
 	if err != nil {
 		return nil, err
 	}
 
 	getNewPrograms := func(sha string) (string, error) {
-		newSha, err := MasterSha(repo)
+		newSha, err := git.MasterSha(repo)
 
 		if err != nil {
 			return sha, err
@@ -77,13 +78,13 @@ func MakeDagr(repo, workingDir string, delay time.Duration) (*dagrState, error) 
 			return sha, nil
 		}
 
-		err = Pull(workingDir)
+		err = git.Pull(workingDir)
 
 		if err != nil {
 			return sha, err
 		}
 
-		programs, err := readDir(workingDir)
+		programs, err := program.ReadDir(workingDir)
 
 		if err != nil {
 			return sha, err

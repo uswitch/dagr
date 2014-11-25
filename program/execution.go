@@ -1,4 +1,4 @@
-package main
+package program
 
 import (
 	"code.google.com/p/go-uuid/uuid"
@@ -12,40 +12,47 @@ type Execution struct {
 	Program          *Program
 	Id               string
 	StartTime        time.Time
-	recordedMessages []*ExecutionMessage
-	messages         chan *ExecutionMessage
+	recordedMessages []*executionMessage
+	messages         chan *executionMessage
 	finished         bool
 	exitStatus       ExitCode
 	subscribers      map[*websocket.Conn]bool
 	sync.RWMutex
 }
 
-type ExecutionMessage struct {
+type executionMessage struct {
 	ProgramName string `json:"programName"`
 	MessageType string `json:"messageType"`
 	Line        string `json:"line"`
 }
 
-func NewExecution(p *Program, messages chan *ExecutionMessage) *Execution {
-	return &Execution{
+func NewExecution(p *Program, messages chan *executionMessage) *Execution {
+	e := &Execution{
 		Program:     p,
 		Id:          uuid.New(),
 		StartTime:   time.Now(),
 		messages:    messages,
 		subscribers: make(map[*websocket.Conn]bool),
 	}
+	go func() {
+		for msg := range e.messages {
+			e.broadcast(msg)
+		}
+	}()
+
+	return e
 }
 
 func (e *Execution) SendMessage(messageType, message string) {
 	e.Lock()
 	defer e.Unlock()
-	executionMessage := &ExecutionMessage{e.Program.Name, messageType, message + "\n"}
+	executionMessage := &executionMessage{e.Program.Name, messageType, message + "\n"}
 	e.messages <- executionMessage
 	e.recordedMessages = append(e.recordedMessages, executionMessage)
 	log.Println(e.Program.Name, messageType, message)
 }
 
-func (e *Execution) RecordedMessages() []*ExecutionMessage {
+func (e *Execution) RecordedMessages() []*executionMessage {
 	e.RLock()
 	defer e.RUnlock()
 	return e.recordedMessages
@@ -99,18 +106,12 @@ func (e *Execution) Unsubscribe(c *websocket.Conn) {
 	delete(e.subscribers, c)
 }
 
-func (e *Execution) Broadcast(msg *ExecutionMessage) {
+func (e *Execution) broadcast(msg *executionMessage) {
 	e.RLock()
 	defer e.RUnlock()
 	for conn := range e.subscribers {
 		if err := conn.WriteJSON(msg); err != nil {
 			log.Println("error when sending to websocket", err)
 		}
-	}
-}
-
-func (e *Execution) BroadcastAll() {
-	for msg := range e.messages {
-		e.Broadcast(msg)
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package program
 
 import (
 	"bufio"
@@ -67,7 +67,7 @@ func (p *Program) Execute() (*Execution, error) {
 		return nil, err
 	}
 
-	messages := make(chan *ExecutionMessage, BUFFER_SIZE)
+	messages := make(chan *executionMessage, BUFFER_SIZE)
 	execution := NewExecution(p, messages)
 	stdoutFinished := make(chan interface{})
 	stderrFinished := make(chan interface{})
@@ -128,7 +128,7 @@ func extractExitCode(err error) (ExitCode, error) {
 	}
 }
 
-func readDir(dir string) ([]*Program, error) {
+func ReadDir(dir string) ([]*Program, error) {
 	log.Println("looking for programs in", dir)
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
