@@ -1,116 +1,52 @@
 package dagrpkg
 
 import (
-	"github.com/uswitch/dagr/git"
 	"github.com/uswitch/dagr/program"
-	"log"
-	"sync"
+	"github.com/uswitch/dagr/scheduler"
 	"time"
 )
 
 type Dagr interface {
-	Programs() []*program.Program
 	Execute(*program.Program) (*program.Execution, error)
+	Programs() []*program.Program
 	FindProgram(string) *program.Program
 	FindExecution(string) *program.Execution
 }
 
 type dagrState struct {
-	programs   []*program.Program
-	executions map[string]*program.Execution
-	sync.RWMutex
+	executor   *scheduler.Executor
+	repository *program.Repository
 }
 
-func (this *dagrState) Execute(program *program.Program) (*program.Execution, error) {
-	this.Lock()
-	defer this.Unlock()
-	execution, err := program.Execute()
-
-	if err != nil {
-		return nil, err
-	}
-
-	this.executions[execution.Id] = execution
-	return execution, nil
-}
-
-func (this *dagrState) FindProgram(name string) *program.Program {
-	this.RLock()
-	defer this.RUnlock()
-	for _, program := range this.programs {
-		if program.Name == name {
-			return program
-		}
-	}
-
-	return nil
+func (this *dagrState) Execute(p *program.Program) (*program.Execution, error) {
+	execution, err := this.executor.Execute(p)
+	return execution, err
 }
 
 func (this *dagrState) FindExecution(executionId string) *program.Execution {
-	this.RLock()
-	defer this.RUnlock()
-	return this.executions[executionId]
+	return this.executor.FindExecution(executionId)
+}
+
+func (this *dagrState) FindProgram(name string) *program.Program {
+	return this.repository.FindProgram(name)
 }
 
 func (this *dagrState) Programs() []*program.Program {
-	this.RLock()
-	defer this.RUnlock()
-	return this.programs
+	return this.repository.Programs()
 }
 
 func New(repo, workingDir string, delay time.Duration) (*dagrState, error) {
-	s := &dagrState{executions: make(map[string]*program.Execution)}
-
-	err := git.PullOrClone(repo, workingDir)
+	executor := scheduler.NewExecutor()
+	repository, err := program.NewRepository(repo, workingDir)
 
 	if err != nil {
 		return nil, err
 	}
 
-	getNewPrograms := func(sha string) (string, error) {
-		newSha, err := git.MasterSha(repo)
+	return &dagrState{executor: executor, repository: repository}, nil
+}
 
-		if err != nil {
-			return sha, err
-		}
-
-		if newSha == sha {
-			return sha, nil
-		}
-
-		err = git.Pull(workingDir)
-
-		if err != nil {
-			return sha, err
-		}
-
-		programs, err := program.ReadDir(workingDir)
-
-		if err != nil {
-			return sha, err
-		}
-
-		s.Lock()
-		defer s.Unlock()
-		s.programs = programs
-
-		return newSha, nil
-	}
-
-	go func() {
-		sha := ""
-
-		for {
-			newSha, err := getNewPrograms(sha)
-			sha = newSha
-
-			if err != nil {
-				log.Println(err)
-			}
-
-			time.Sleep(delay)
-		}
-	}()
-
-	return s, nil
+func (d *dagrState) Run() {
+	go d.repository.RunRefreshLoop(time.Tick(60 * time.Second))
+	go scheduler.RunScheduleLoop(d.repository, d.executor, time.Tick(1*time.Second))
 }

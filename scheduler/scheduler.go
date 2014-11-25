@@ -1,28 +1,24 @@
 package scheduler
 
 import (
-	dagr "github.com/uswitch/dagr/dagrpkg"
 	"github.com/uswitch/dagr/program"
 	"log"
 	"time"
 )
 
-func RunScheduleLoop(dagr dagr.Dagr, ticks <-chan time.Time) {
+func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <-chan time.Time) {
 	for now := range ticks {
-		for _, p := range ProgramsToExecute(dagr, now) {
+		for _, p := range SelectExecutablePrograms(repository.Programs(), now) {
 			log.Println("scheduling execution of", p.Name)
-			_, err := dagr.Execute(p)
-			if err != nil {
-				log.Println(err)
-			}
+			executor.Execute(p)
 		}
 	}
 }
 
-func ProgramsToExecute(dagr dagr.Dagr, instant time.Time) []*program.Program {
+func SelectExecutablePrograms(programs []*program.Program, instant time.Time) []*program.Program {
 	readyPrograms := []*program.Program{}
 
-	for _, p := range dagr.Programs() {
+	for _, p := range programs {
 		if isReady(p, instant) {
 			readyPrograms = append(readyPrograms, p)
 		}
