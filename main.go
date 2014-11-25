@@ -3,10 +3,12 @@ package main
 import (
 	"github.com/GeertJohan/go.rice"
 	dagr "github.com/uswitch/dagr/dagrpkg"
+	"github.com/uswitch/dagr/scheduler"
 	"github.com/uswitch/dagr/web"
 	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
 	"net/http"
+	"time"
 )
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
@@ -34,6 +36,8 @@ func main() {
 	}
 
 	log.Println("dagr listening on", *httpAddr)
+
+	go scheduler.RunScheduleLoop(dagr, time.Tick(1*time.Second))
 
 	log.Fatal(server.ListenAndServe())
 }

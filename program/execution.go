@@ -15,6 +15,7 @@ type Execution struct {
 	recordedMessages []*executionMessage
 	messages         chan *executionMessage
 	finished         bool
+	duration         time.Duration
 	exitStatus       ExitCode
 	subscribers      map[*websocket.Conn]bool
 	sync.RWMutex
@@ -74,7 +75,14 @@ func (e *Execution) Finish(exitStatus ExitCode) {
 	e.Lock()
 	defer e.Unlock()
 	e.finished = true
+	e.duration = time.Now().Sub(e.StartTime)
 	e.exitStatus = exitStatus
+}
+
+func (e *Execution) Duration() time.Duration {
+	e.RLock()
+	defer e.RUnlock()
+	return e.duration
 }
 
 func (e *Execution) CatchUp(conn *websocket.Conn, countSoFar int) int {
