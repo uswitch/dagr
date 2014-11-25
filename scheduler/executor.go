@@ -22,7 +22,11 @@ type executionRequest struct {
 }
 
 func NewExecutor() *Executor {
-	return &Executor{}
+	return &Executor{
+		executionRequests:  make(chan *executionRequest),
+		executions:         make(chan *program.Execution),
+		recordedExecutions: make(map[string]*program.Execution),
+	}
 }
 
 func (e *Executor) FindExecution(executionId string) *program.Execution {
