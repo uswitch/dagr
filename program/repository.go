@@ -105,11 +105,8 @@ func readDir(dir string) ([]*Program, error) {
 
 			if err == nil {
 				log.Println("program executable:", commandPath)
-				programs = append(programs, &Program{
-					Name:        info.Name(),
-					CommandPath: commandPath,
-					MainSource:  string(mainSource),
-				})
+				p := newProgram(info.Name(), commandPath, string(mainSource))
+				programs = append(programs, p)
 			}
 		}
 	}

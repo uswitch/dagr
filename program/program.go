@@ -3,10 +3,9 @@ package program
 import (
 	"bufio"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"io"
-	"io/ioutil"
 	"log"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -16,12 +15,23 @@ import (
 
 const BUFFER_SIZE = 1000
 
+type Subscriber interface {
+	Unsubscribe(*websocket.Conn)
+}
+
 type Program struct {
 	Name        string
 	CommandPath string
 	MainSource  string
 	executions  []*Execution
+	messages    chan *programExecutionsMessage
+	subscribers map[*websocket.Conn]bool
 	sync.RWMutex
+}
+
+type programExecutionsMessage struct {
+	ExecutionId     string `json:"executionId"`
+	ExecutionStatus string `json:"executionStatus"`
 }
 
 func forwardOutput(execution *Execution, messageType string, r io.Reader, finished chan interface{}) {
@@ -60,8 +70,9 @@ func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 		return nil, err
 	}
 
-	messages := make(chan *executionMessage, BUFFER_SIZE)
-	execution := NewExecution(p, messages)
+	execution := NewExecution(p)
+	p.SendExecutionState(execution)
+	messages := execution.messages
 	stdoutFinished := make(chan interface{})
 	stderrFinished := make(chan interface{})
 
@@ -111,6 +122,34 @@ func (p *Program) Executions() []*Execution {
 	return p.executions
 }
 
+func (p *Program) SendExecutionState(e *Execution) {
+	programExecutionsMessage := &programExecutionsMessage{
+		e.Id,
+		e.makeStatusString(),
+	}
+	p.messages <- programExecutionsMessage
+}
+
+func (p *Program) Subscribe(c *websocket.Conn) {
+	ProgramLog(p, "adding subscriber")
+	p.subscribers[c] = true
+}
+
+func (p *Program) Unsubscribe(c *websocket.Conn) {
+	ProgramLog(p, "removing subscriber")
+	delete(p.subscribers, c)
+}
+
+func (p *Program) broadcast(msg *programExecutionsMessage) {
+	p.RLock()
+	defer p.RUnlock()
+	for conn := range p.subscribers {
+		if err := conn.WriteJSON(msg); err != nil {
+			ProgramLog(p, "error when sending to websocket", err)
+		}
+	}
+}
+
 func extractExitCode(err error) (ExitCode, error) {
 	switch ex := err.(type) {
 	case *exec.ExitError:
@@ -120,34 +159,21 @@ func extractExitCode(err error) (ExitCode, error) {
 	}
 }
 
-func ReadDir(dir string) ([]*Program, error) {
-	log.Println("looking for programs in", dir)
-	infos, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, err
+func newProgram(name, commandPath, mainSource string) *Program {
+	p := &Program{
+		Name:        name,
+		CommandPath: commandPath,
+		MainSource:  mainSource,
+		messages:    make(chan *programExecutionsMessage, BUFFER_SIZE),
+		subscribers: make(map[*websocket.Conn]bool),
 	}
-
-	programs := []*Program{}
-
-	for _, info := range infos {
-		commandPath := filepath.Join(dir, info.Name(), "main")
-		_, err := os.Stat(commandPath)
-
-		if err == nil {
-			mainSource, err := ioutil.ReadFile(commandPath)
-
-			if err == nil {
-				log.Println("program executable:", commandPath)
-				programs = append(programs, &Program{
-					Name:        info.Name(),
-					CommandPath: commandPath,
-					MainSource:  string(mainSource),
-				})
-			}
+	go func() {
+		for msg := range p.messages {
+			p.broadcast(msg)
 		}
-	}
+	}()
 
-	return programs, nil
+	return p
 }
 
 func ProgramLog(p *Program, args ...interface{}) {

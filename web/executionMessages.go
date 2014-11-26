@@ -10,12 +10,34 @@ import (
 	"strconv"
 )
 
-func handleExecutionMessages(app app.App) http.HandlerFunc {
-	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+func programExecutions(app app.App) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		conn, err := upgrader.Upgrade(w, req, nil)
+		if err != nil {
+			log.Println("cannot upgrade to websocket")
+			return
+		}
+		vars := mux.Vars(req)
+		programName := vars["program"]
+		log.Println("subscribing to executions for program :", programName)
+		program := app.FindProgram(programName)
+		if program == nil {
+			log.Println("no such program:", programName)
+			http.NotFound(w, req)
+		} else {
+			program.Subscribe(conn)
+			go readLoop(program, conn)
+		}
 	}
 
+}
+
+func handleExecutionMessages(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		conn, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
@@ -48,12 +70,12 @@ func handleExecutionMessages(app app.App) http.HandlerFunc {
 }
 
 // read is required (http://www.gorillatoolkit.org/pkg/websocket)
-func readLoop(execution *program.Execution, c *websocket.Conn) {
+func readLoop(s program.Subscriber, c *websocket.Conn) {
 	for {
 		_, _, err := c.NextReader()
 		if err != nil {
 			c.Close()
-			execution.Unsubscribe(c)
+			s.Unsubscribe(c)
 			return
 		}
 	}

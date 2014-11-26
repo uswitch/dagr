@@ -35,12 +35,12 @@ type executionMessage struct {
 	Line        string `json:"line"`
 }
 
-func NewExecution(p *Program, messages chan *executionMessage) *Execution {
+func NewExecution(p *Program) *Execution {
 	e := &Execution{
 		Program:     p,
 		Id:          uuid.New(),
 		StartTime:   time.Now(),
-		messages:    messages,
+		messages:    make(chan *executionMessage, BUFFER_SIZE),
 		subscribers: make(map[*websocket.Conn]bool),
 	}
 	go func() {
@@ -79,6 +79,7 @@ func (e *Execution) Finish(exitStatus ExitCode) {
 	e.finished = true
 	e.duration = time.Now().Sub(e.StartTime)
 	e.exitStatus = exitStatus
+	e.Program.SendExecutionState(e)
 }
 
 func (e *Execution) Duration() time.Duration {
@@ -118,4 +119,19 @@ func (e *Execution) broadcast(msg *executionMessage) {
 			log.Println("error when sending to websocket", err)
 		}
 	}
+}
+
+func (e *Execution) makeStatusString() string {
+	if e.finished {
+		switch e.exitStatus {
+		case Success:
+			return "success"
+		case Retryable:
+			return "retryable"
+		case Failed:
+			return "failed"
+		}
+	}
+
+	return "running"
 }
