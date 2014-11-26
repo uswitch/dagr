@@ -15,6 +15,10 @@ $(function() {
                 btn.removeClass("pure-button-disabled");
             }
             console.log(data)
+
+            $('#succeeded h2').text($('td.execution-status div.succeeded').length)
+            $('#retryable h2').text($('td.execution-status div.retryable').length)
+            $('#failed h2').text($('td.execution-status div.failed').length)
         };
     });
 });
