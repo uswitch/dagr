@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
     <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
-    <script src="/static/websocket.js"></script>
+    <script src="/static/execution.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <title>Dagr: {{.Execution.Program.Name}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,7 +27,7 @@
         <pre><code>{{.Execution.Program.MainSource}}</code></pre>
       </div>
       
-      <div id="messages" data-exec-url="/executions/{{.Execution.Id}}/messages/{{.Execution.RecordedMessages|len}}">
+      <div id="messages" data-socket-path="/executions/{{.Execution.Id}}/messages/{{.Execution.RecordedMessages|len}}">
         <pre>{{range .Execution.RecordedMessages}}<span class="{{.MessageType}}">{{.Line}}</span>{{ end }}</pre>
       </div>
 

@@ -1,5 +1,5 @@
 $(function() {
-    var path = $("#messages").attr("data-exec-url");
+    var path = $("#messages").attr("data-socket-path");
     url = 'ws://' + window.location.host + path;
     console.log('connecting to:' + url);
     var ws = new WebSocket(url);

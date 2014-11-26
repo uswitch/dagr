@@ -30,8 +30,11 @@ type Program struct {
 }
 
 type programExecutionsMessage struct {
-	ExecutionId     string `json:"executionId"`
-	ExecutionStatus string `json:"executionStatus"`
+	ProgramName          string `json:"programName"`
+	ExecutionId          string `json:"executionId"`
+	ExecutionTime        string `json:"executionTime"`
+	ExecutionStatus      string `json:"executionStatus"`
+	ExecutionStatusLabel string `json:"executionStatusLabel"`
 }
 
 func forwardOutput(execution *Execution, messageType string, r io.Reader, finished chan interface{}) {
@@ -123,9 +126,13 @@ func (p *Program) Executions() []*Execution {
 }
 
 func (p *Program) SendExecutionState(e *Execution) {
+	status, label := e.makeStatusStrings()
 	programExecutionsMessage := &programExecutionsMessage{
+		p.Name,
 		e.Id,
-		e.makeStatusString(),
+		e.StartTime.Format("2 Jan 2006 15:04"),
+		status,
+		label,
 	}
 	p.messages <- programExecutionsMessage
 }

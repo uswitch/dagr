@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
 	"log"
@@ -11,6 +12,7 @@ import (
 type programStatus struct {
 	Program *program.Program
 	*executionStatus
+	ProgramExecutionsSocketPath string
 }
 
 type indexPageState struct {
@@ -60,10 +62,13 @@ func handleIndex(app app.App, indexTemplate *template.Template) http.HandlerFunc
 			}
 			executionStatus := newExecutionStatus(lastExecution)
 
+			programExecutionsSocketPath := fmt.Sprintf("/program/%s/executions", p.Name)
+
 			programStatuses = append(programStatuses,
 				&programStatus{
-					Program:         p,
-					executionStatus: executionStatus,
+					Program:                     p,
+					ProgramExecutionsSocketPath: programExecutionsSocketPath,
+					executionStatus:             executionStatus,
 				})
 
 			if executionStatus.Succeeded {

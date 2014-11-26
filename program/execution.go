@@ -121,17 +121,17 @@ func (e *Execution) broadcast(msg *executionMessage) {
 	}
 }
 
-func (e *Execution) makeStatusString() string {
+func (e *Execution) makeStatusStrings() (string, string) {
 	if e.finished {
 		switch e.exitStatus {
 		case Success:
-			return "success"
+			return "succeeded", "Succeeded"
 		case Retryable:
-			return "retryable"
+			return "retryable", "Retryable"
 		case Failed:
-			return "failed"
+			return "failed", "Failed"
 		}
 	}
 
-	return "running"
+	return "running", "Running"
 }

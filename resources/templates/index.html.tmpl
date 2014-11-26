@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="/static/index.js"></script>
     <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-nr-min.css">
     <link rel="stylesheet" href="/static/dagr.css">
     <title>Dagr</title>
@@ -40,49 +42,36 @@
           
           <tbody>
 {{range .ProgramStatuses}}
-            <tr>
+            <tr class="program-status" data-socket-path="{{.ProgramExecutionsSocketPath}}">
               <td class="program-name table-1-3">
                 <a href="/program/{{.Program.Name}}">{{.Program.Name}}</a>
               </td>
-              <td class="table-1-3">{{if .Execution}}<a href="/executions/{{.Execution.Id}}">{{.ExecutionTime}}</a>{{else}}Never run{{end}}</td>
-              {{if .Succeeded}}
-              <td class="execution-status-success">
+              <td class="execution-time table-1-3">{{if .Execution}}<a href="/executions/{{.Execution.Id}}">{{.ExecutionTime}}</a>{{else}}<a href="#">Never run</a>{{end}}</td>
+              <td class="execution-status">
+                {{if .Succeeded}}
                 <div class="succeeded">
                   Succeeded
                 </div>
-              </td>
-              {{else if .Failed}}
-              <td class="execution-status-failed">
+                {{else if .Failed}}
                 <div class="failed">
                   Failed
                 </div>
-              </td>
-              {{else if .Retryable}}
-              <td class="execution-status-retryable">
+                {{else if .Retryable}}
                 <div class="retryable">
                   Retryable
                 </div>
-              </td>
-              {{else if .Running}}
-              <td class="execution-status-running">
+                {{else if .Running}}
                 <div class="running">
                   Running
                 </div>
-              </td>
-              {{else}}
-              <td>
-                {{/* never run */}}
-              </td>
-              {{end}}
-              
-              <td>
-                {{if .Running}}
-                <button class="pure-button pure-button-disabled">Run</button>
                 {{else}}
-                <form action="/program/{{.Program.Name}}/execute" method="post">
-                  <button class="pure-button pure-button-primary">Run</button>
-                </form>
+                {{/* never run */}}
                 {{end}}
+              </td>
+              <td>
+                <form action="/program/{{.Program.Name}}/execute" method="post">
+                  <button class="program-run pure-button pure-button-primary {{if .Running}}pure-button-disabled{{end}}">Run</button>
+                </form>
               </td>
             </tr>
 {{end}}
