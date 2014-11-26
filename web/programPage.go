@@ -10,7 +10,8 @@ import (
 )
 
 type programPageState struct {
-	Program *program.Program
+	Program           *program.Program
+	ExecutionStatuses []*executionStatus
 }
 
 func handleProgramInfo(app app.App, infoTemplate *template.Template) http.HandlerFunc {
@@ -21,9 +22,17 @@ func handleProgramInfo(app app.App, infoTemplate *template.Template) http.Handle
 		if program == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
-		} else if err := infoTemplate.Execute(w, programPageState{program}); err != nil {
-			log.Println("error when executing program info template:", err)
-			http.Error(w, err.Error(), 500)
+		} else {
+			executionStatuses := []*executionStatus{}
+
+			for _, e := range program.Executions() {
+				executionStatuses = append(executionStatuses, newExecutionStatus(e))
+			}
+
+			if err := infoTemplate.Execute(w, programPageState{program, executionStatuses}); err != nil {
+				log.Println("error when executing program info template:", err)
+				http.Error(w, err.Error(), 500)
+			}
 		}
 	}
 }

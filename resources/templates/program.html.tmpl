@@ -24,6 +24,54 @@
       <div class="source">
         <pre><code>{{.Program.MainSource}}</code></pre>
       </div>
+
+      <div id="executions">
+        <table class="pure-table">
+          <thead>
+            <tr>
+              <th>Execution</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          
+          <tbody>
+            {{range .ExecutionStatuses}}
+            <tr>
+              <td><a href="/executions/{{.Execution.Id}}">{{.ExecutionTime}}</a></td>
+              {{if .Succeeded}}
+              <td class="execution-status-success">
+                <div class="succeeded">
+                  Succeeded
+                </div>
+              </td>
+              {{else if .Failed}}
+              <td class="execution-status-failed">
+                <div class="failed">
+                  Failed
+                </div>
+              </td>
+              {{else if .Retryable}}
+              <td class="execution-status-retryable">
+                <div class="retryable">
+                  Retryable
+                </div>
+              </td>
+              {{else if .Running}}
+              <td class="execution-status-running">
+                <div class="running">
+                  Running
+                </div>
+              </td>
+              {{else}}
+              <td>
+                {{/* never run? */}}
+              </td>
+              {{end}}
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
     </div>
   </body>
 </html>

@@ -9,6 +9,15 @@ import (
 	"text/template"
 )
 
+type executionStatus struct {
+	Execution     *program.Execution
+	ExecutionTime string
+	Running       bool
+	Succeeded     bool
+	Failed        bool
+	Retryable     bool
+}
+
 type executionPageState struct {
 	Execution *program.Execution
 }

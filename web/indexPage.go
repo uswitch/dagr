@@ -9,13 +9,8 @@ import (
 )
 
 type programStatus struct {
-	Program           *program.Program
-	LastExecution     *program.Execution
-	LastExecutionTime string
-	Running           bool
-	Succeeded         bool
-	Failed            bool
-	Retryable         bool
+	Program *program.Program
+	*executionStatus
 }
 
 type indexPageState struct {
@@ -23,6 +18,31 @@ type indexPageState struct {
 	Retryable       int
 	Failed          int
 	ProgramStatuses []*programStatus
+}
+
+func newExecutionStatus(execution *program.Execution) *executionStatus {
+	var executionTime string
+	var running, succeeded, retryable, failed bool
+
+	if execution != nil {
+		executionTime = execution.StartTime.Format("2 Jan 2006 15:04")
+		running = !execution.Finished()
+
+		if !running {
+			succeeded = execution.ExitStatus() == program.Success
+			retryable = execution.ExitStatus() == program.Retryable
+			failed = execution.ExitStatus() == program.Failed
+		}
+	}
+
+	return &executionStatus{
+		Execution:     execution,
+		ExecutionTime: executionTime,
+		Running:       running,
+		Succeeded:     succeeded,
+		Retryable:     retryable,
+		Failed:        failed,
+	}
 }
 
 func handleIndex(app app.App, indexTemplate *template.Template) http.HandlerFunc {
@@ -35,44 +55,26 @@ func handleIndex(app app.App, indexTemplate *template.Template) http.HandlerFunc
 		for _, p := range programs {
 			executions := p.Executions()
 			var lastExecution *program.Execution
-			var lastExecutionTime string
 			if len(executions) > 0 {
 				lastExecution = executions[len(executions)-1]
-				lastExecutionTime = lastExecution.StartTime.Format("2 Jan 2006 15:04")
 			}
-
-			var running, succeeded, retryable, failed bool
-
-			if lastExecution != nil {
-				running = !lastExecution.Finished()
-
-				if !running {
-					succeeded = lastExecution.ExitStatus() == program.Success
-					retryable = lastExecution.ExitStatus() == program.Retryable
-					failed = lastExecution.ExitStatus() == program.Failed
-				}
-			}
+			executionStatus := newExecutionStatus(lastExecution)
 
 			programStatuses = append(programStatuses,
 				&programStatus{
-					Program:           p,
-					LastExecution:     lastExecution,
-					LastExecutionTime: lastExecutionTime,
-					Running:           running,
-					Succeeded:         succeeded,
-					Retryable:         retryable,
-					Failed:            failed,
+					Program:         p,
+					executionStatus: executionStatus,
 				})
 
-			if succeeded {
+			if executionStatus.Succeeded {
 				totalSucceeded++
 			}
 
-			if retryable {
+			if executionStatus.Retryable {
 				totalRetryable++
 			}
 
-			if failed {
+			if executionStatus.Failed {
 				totalFailed++
 			}
 		}

@@ -31,17 +31,19 @@ body {
     color: #a94442;
 }
 
-#programs table {
+#programs table, #executions table {
     width: 100%;
     border: none;
 }
 
-#programs thead {
+#programs thead, #executions thead {
     background-color: #D6D6D6;
 }
 
 #programs td,
-#programs th {
+#programs th,
+#executions td,
+#executions th {
     border-left: none;
 }
 
@@ -98,8 +100,4 @@ body {
 #messages pre .fail {
     color: #a94442;
     font-weight: bold;
-}
-
-.label a {
-    text-decoration: none
 }
