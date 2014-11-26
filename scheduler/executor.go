@@ -3,28 +3,28 @@ package scheduler
 import (
 	"github.com/uswitch/dagr/program"
 	"log"
+	"time"
 )
 
 type Executor struct {
 	executionRequests  chan *executionRequest
-	executions         chan *program.Execution
 	recordedExecutions map[string]*program.Execution
 }
 
-type executionResult struct {
+type executionResponse struct {
 	execution *program.Execution
+	exitCh    chan program.ExitCode
 	err       error
 }
 
 type executionRequest struct {
-	program *program.Program
-	result  chan *executionResult
+	program    *program.Program
+	responseCh chan *executionResponse
 }
 
 func NewExecutor() *Executor {
 	return &Executor{
 		executionRequests:  make(chan *executionRequest),
-		executions:         make(chan *program.Execution),
 		recordedExecutions: make(map[string]*program.Execution),
 	}
 }
@@ -34,47 +34,66 @@ func (e *Executor) FindExecution(executionId string) *program.Execution {
 }
 
 func (e *Executor) doExecute(er *executionRequest) (*program.Execution, error) {
-	log.Println("executing", er.program.Name)
+	program.ProgramLog(er.program, "executing")
 
-	execution, err := er.program.Execute()
-
-	log.Println(er.program.Name, "executed")
+	exitCh := make(chan program.ExitCode)
+	execution, err := er.program.Execute(exitCh)
 
 	if err != nil {
-		log.Println("execution error", err)
-		er.result <- &executionResult{nil, err}
+		if execution != nil {
+			program.ExecutionLog(execution, "error", err)
+		} else {
+			program.ProgramLog(er.program, "error", err)
+		}
+		er.responseCh <- &executionResponse{nil, nil, err}
 		// record error as well?
 		return nil, err
+	} else {
+		program.ExecutionLog(execution, "started execution")
 	}
 
-	log.Println("execution ok -- sending result to channel")
-	er.result <- &executionResult{execution, nil}
+	er.responseCh <- &executionResponse{execution, exitCh, nil}
 
-	log.Println("result sent")
 	e.recordedExecutions[execution.Id] = execution
 	return execution, nil
 }
 
+func (e *Executor) monitorExecution(pe *program.Execution, ch chan program.ExitCode) {
+	program.ExecutionLog(pe, "monitoring execution")
+	exitStatus := <-ch
+	program.ExecutionLog(pe, "execution completed", exitStatus)
+	if exitStatus == program.Retryable {
+		program.ExecutionLog(pe, "scheduling for retry in 1m")
+		time.Sleep(1 * time.Minute) // FIXME: make configurable
+		_, err := e.Execute(pe.Program)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
 func (e *Executor) Execute(p *program.Program) (*program.Execution, error) {
-	ch := make(chan *executionResult)
-	log.Println("sending execution request for program", p.Name)
+	ch := make(chan *executionResponse)
+
 	e.executionRequests <- &executionRequest{p, ch}
-	log.Println("request sent -- awaiting result")
-	result := <-ch
-	log.Println("got result")
-	return result.execution, result.err
+	response := <-ch
+
+	if response.err == nil {
+		go e.monitorExecution(response.execution, response.exitCh)
+	}
+
+	return response.execution, response.err
 }
 
 func (e *Executor) RunExecutorLoop() {
 	log.Println("running executor loop")
 	for er := range e.executionRequests {
-		log.Println("got an execution request")
+		program.ProgramLog(er.program, "got an execution request")
 		execution, err := e.doExecute(er)
 		if err == nil {
-			//e.executions <- execution // nothing is listening to this yet?
 			e.recordedExecutions[execution.Id] = execution
 		} else {
-			log.Println(err)
+			program.ProgramLog(er.program, "error", err)
 		}
 	}
 }

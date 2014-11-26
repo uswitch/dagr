@@ -9,19 +9,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"syscall"
 )
 
 const BUFFER_SIZE = 1000
-
-const (
-	Success   = 0
-	Retryable = 1
-	Failed    = 2
-)
-
-type ExitCode int
 
 type Program struct {
 	Name        string
@@ -45,11 +38,11 @@ func forwardOutput(execution *Execution, messageType string, r io.Reader, finish
 	finished <- struct{}{}
 }
 
-func (p *Program) Execute() (*Execution, error) {
+func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 	p.Lock()
 	defer p.Unlock()
 
-	log.Println("executing", p.CommandPath)
+	ProgramLog(p, "executing command")
 	cmd := exec.Command(p.CommandPath)
 
 	stdout, err := cmd.StdoutPipe()
@@ -80,8 +73,6 @@ func (p *Program) Execute() (*Execution, error) {
 		defer close(stdoutFinished)
 		defer close(stderrFinished)
 
-		log.Println(p.Name, "waiting to for stdout and stderr to be read")
-
 		// docs say we shouldn't call cmd.Wait() until all has been read, hence
 		// the need for the 'finished' channels
 		<-stdoutFinished
@@ -90,7 +81,8 @@ func (p *Program) Execute() (*Execution, error) {
 		err := cmd.Wait()
 		if err == nil {
 			execution.SendMessage("ok", "successfully completed")
-			execution.Finish(ExitCode(0))
+			execution.Finish(Success)
+			ch <- Success
 			return
 		}
 
@@ -99,13 +91,15 @@ func (p *Program) Execute() (*Execution, error) {
 		if err != nil {
 			log.Println(p.Name, "failed to run", err)
 			execution.SendMessage("fail", fmt.Sprint("failed to run ", err))
-			execution.Finish(ExitCode(-1)) //?
+			execution.Finish(Failed)
+			ch <- Failed
 			return
 		}
 
-		log.Println(p.Name, "exited with status", exitCode)
+		ExecutionLog(execution, "exited with status", exitCode)
 		execution.SendMessage("fail", fmt.Sprint("exited with status ", exitCode))
 		execution.Finish(exitCode)
+		ch <- exitCode
 	}()
 
 	p.executions = append(p.executions, execution)
@@ -154,4 +148,18 @@ func ReadDir(dir string) ([]*Program, error) {
 	}
 
 	return programs, nil
+}
+
+func ProgramLog(p *Program, args ...interface{}) {
+	_, fn, line, _ := runtime.Caller(1)
+	identity := []string{p.Name}
+	s := fmt.Sprintf("%-20s", fmt.Sprintf("%s:%d", filepath.Base(fn), line))
+	log.Println(append([]interface{}{s, identity}, args...)...)
+}
+
+func ExecutionLog(e *Execution, args ...interface{}) {
+	_, fn, line, _ := runtime.Caller(1)
+	identity := []string{e.Program.Name, e.Id}
+	s := fmt.Sprintf("%-20s", fmt.Sprintf("%s:%d", filepath.Base(fn), line))
+	log.Println(append([]interface{}{s, identity}, args...)...)
 }

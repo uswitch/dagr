@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+const (
+	Success   = 0
+	Retryable = 1
+	Failed    = 2
+)
+
+type ExitCode int
+
 type Execution struct {
 	Program          *Program
 	Id               string
@@ -50,7 +58,7 @@ func (e *Execution) SendMessage(messageType, message string) {
 	executionMessage := &executionMessage{e.Program.Name, messageType, message + "\n"}
 	e.messages <- executionMessage
 	e.recordedMessages = append(e.recordedMessages, executionMessage)
-	log.Println(e.Program.Name, messageType, message)
+	//log.Println(e.Program.Name, messageType, message)
 }
 
 func (e *Execution) RecordedMessages() []*executionMessage {

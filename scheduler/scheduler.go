@@ -2,16 +2,15 @@ package scheduler
 
 import (
 	"github.com/uswitch/dagr/program"
-	"log"
 	"time"
 )
 
 func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <-chan time.Time) {
 	for now := range ticks {
 		for _, p := range selectExecutablePrograms(repository.Programs(), now) {
-			log.Println("scheduling execution of", p.Name)
+			program.ProgramLog(p, "scheduling execution")
+			//execution, err :=
 			executor.Execute(p)
-			log.Println("done")
 		}
 	}
 }
