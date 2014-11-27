@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/uswitch/dagr/program"
 	"github.com/uswitch/dagr/scheduler"
+	"log"
 	"time"
 )
 
