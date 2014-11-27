@@ -1,6 +1,7 @@
 package git
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,18 +14,31 @@ func IsRepo(path string) bool {
 }
 
 func Clone(repo, workingDir string) error {
-	return exec.Command("git", "clone", repo, workingDir).Run()
+	log.Println("cloning", repo, "into", workingDir)
+	cmd := exec.Command("git", "clone", repo, workingDir)
+	output, err := cmd.CombinedOutput()
+	log.Println(string(output))
+	
+	return err
 }
 
 func Pull(workingDir string) error {
+	log.Println("pulling latest into", workingDir)
 	cmd := exec.Command("git", "pull")
 	cmd.Dir = workingDir
-	return cmd.Run()
+	
+	output, err := cmd.CombinedOutput()
+	log.Println(string(output))
+	
+	return err
 }
 
 func MasterSha(repo string) (string, error) {
-	bytes, err := exec.Command("git", "ls-remote", repo, "master").Output()
-
+	log.Println("checking remote sha for", repo)
+	
+	bytes, err := exec.Command("git", "ls-remote", repo, "master").CombinedOutput()
+	log.Println(string(bytes))
+	
 	if err != nil {
 		return "", err
 	}

@@ -20,6 +20,7 @@ var monitorInterval = kingpin.Flag("interval", "interval between checks for new 
 func main() {
 	kingpin.Parse()
 
+	log.Println("starting application")
 	app, err := app.New(*programsRepo, *workingDir)
 
 	if err != nil {
