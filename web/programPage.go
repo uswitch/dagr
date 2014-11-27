@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
@@ -10,8 +11,9 @@ import (
 )
 
 type programPageState struct {
-	Program           *program.Program
-	ExecutionStatuses []*executionStatus
+	Program                     *program.Program
+	ExecutionStatuses           []*executionStatus
+	ProgramExecutionsSocketPath string
 }
 
 func handleProgramInfo(app app.App, infoTemplate *template.Template) http.HandlerFunc {
@@ -29,7 +31,9 @@ func handleProgramInfo(app app.App, infoTemplate *template.Template) http.Handle
 				executionStatuses = append(executionStatuses, newExecutionStatus(e))
 			}
 
-			if err := infoTemplate.Execute(w, programPageState{program, executionStatuses}); err != nil {
+			programExecutionsSocketPath := fmt.Sprintf("/program/%s/executions", program.Name)
+
+			if err := infoTemplate.Execute(w, programPageState{program, executionStatuses, programExecutionsSocketPath}); err != nil {
 				log.Println("error when executing program info template:", err)
 				http.Error(w, err.Error(), 500)
 			}

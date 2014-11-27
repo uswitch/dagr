@@ -4,6 +4,8 @@
     <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-nr-min.css">
     <link rel="stylesheet" href="/static/dagr.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="/static/program.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
     <title>Dagr: {{.Program.Name}}</title>
@@ -25,7 +27,7 @@
         <pre><code>{{.Program.MainSource}}</code></pre>
       </div>
 
-      <div id="executions">
+      <div id="executions" data-socket-path="{{.ProgramExecutionsSocketPath}}">
         <table class="pure-table">
           <thead>
             <tr>
@@ -36,37 +38,29 @@
           
           <tbody>
             {{range .ExecutionStatuses}}
-            <tr>
-              <td><a href="/executions/{{.Execution.Id}}">{{.ExecutionTime}}</a></td>
-              {{if .Succeeded}}
-              <td class="execution-status-success">
+            <tr class="execution-status" data-execution-id="{{.Execution.Id}}">
+              <td class="execution-time"><a href="/executions/{{.Execution.Id}}">{{.ExecutionTime}}</a></td>
+              <td class="execution-status">
+                {{if .Succeeded}}
                 <div class="succeeded">
                   Succeeded
                 </div>
-              </td>
-              {{else if .Failed}}
-              <td class="execution-status-failed">
+                {{else if .Failed}}
                 <div class="failed">
                   Failed
                 </div>
-              </td>
-              {{else if .Retryable}}
-              <td class="execution-status-retryable">
+                {{else if .Retryable}}
                 <div class="retryable">
                   Retryable
                 </div>
-              </td>
-              {{else if .Running}}
-              <td class="execution-status-running">
+                {{else if .Running}}
                 <div class="running">
                   Running
                 </div>
-              </td>
-              {{else}}
-              <td>
+                {{else}}
                 {{/* never run? */}}
+                {{end}}               
               </td>
-              {{end}}
             </tr>
             {{end}}
           </tbody>
