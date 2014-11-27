@@ -2,6 +2,7 @@ package program
 
 import (
 	"bufio"
+	"filepath"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
@@ -57,7 +58,7 @@ func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 
 	ProgramLog(p, "executing command")
 	cmd := exec.Command(p.CommandPath)
-
+	cmd.Dir = filepath.Dir(p.CommandPath)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
