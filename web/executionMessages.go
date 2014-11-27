@@ -24,14 +24,14 @@ func programExecutions(app app.App) http.HandlerFunc {
 		}
 		vars := mux.Vars(req)
 		programName := vars["program"]
-		log.Println("subscribing to executions for program :", programName)
-		program := app.FindProgram(programName)
-		if program == nil {
+		p := app.FindProgram(programName)
+		if p == nil {
 			log.Println("no such program:", programName)
 			http.NotFound(w, req)
 		} else {
-			program.Subscribe(conn)
-			go readLoop(program, conn)
+			program.ProgramLog(p, "subscribing to executions")
+			p.Subscribe(conn)
+			go readLoop(p, conn)
 		}
 	}
 
@@ -46,12 +46,12 @@ func handleExecutionMessages(app app.App) http.HandlerFunc {
 		}
 		vars := mux.Vars(req)
 		executionId := vars["executionId"]
-		log.Println("subscribing to messages for execution id:", executionId)
 		execution := app.FindExecution(executionId)
 		if execution == nil {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
 		} else {
+			program.ExecutionLog(execution, "subscribing to messages")
 			execution.Subscribe(conn)
 			countSoFarStr := vars["countSoFar"]
 			countSoFar, err := strconv.Atoi(countSoFarStr)

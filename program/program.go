@@ -186,13 +186,13 @@ func newProgram(name, commandPath, mainSource string) *Program {
 func ProgramLog(p *Program, args ...interface{}) {
 	_, fn, line, _ := runtime.Caller(1)
 	identity := []string{p.Name}
-	s := fmt.Sprintf("%-20s", fmt.Sprintf("%s:%d", filepath.Base(fn), line))
+	s := fmt.Sprintf("%-25s", fmt.Sprintf("%s:%d", filepath.Base(fn), line))
 	log.Println(append([]interface{}{s, identity}, args...)...)
 }
 
 func ExecutionLog(e *Execution, args ...interface{}) {
 	_, fn, line, _ := runtime.Caller(1)
 	identity := []string{e.Program.Name, e.Id}
-	s := fmt.Sprintf("%-20s", fmt.Sprintf("%s:%d", filepath.Base(fn), line))
+	s := fmt.Sprintf("%-25s", fmt.Sprintf("%s:%d", filepath.Base(fn), line))
 	log.Println(append([]interface{}{s, identity}, args...)...)
 }
