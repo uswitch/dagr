@@ -14,5 +14,6 @@ dagr: dagr-dev resources/templates/*.tmpl resources/static/*.js resources/static
 clean:
 	go clean
 	rm -f bin/dagr*
+	rm -rf src/
 
 .PHONY: all clean deps
