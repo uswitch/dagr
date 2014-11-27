@@ -36,7 +36,9 @@ func (a *appState) Programs() []*program.Program {
 }
 
 func New(repo, workingDir string) (*appState, error) {
+	log.Println("starting executor")
 	executor := scheduler.NewExecutor()
+	log.Println("initialising programs repository")
 	repository, err := program.NewRepository(repo, workingDir)
 
 	if err != nil {
