@@ -1,8 +1,7 @@
 all: dagr
 
 deps:
-	go get
-	go get github.com/GeertJohan/go.rice
+	go get -d -v
 	go get github.com/GeertJohan/go.rice/rice
 
 dagr-dev: *.go
