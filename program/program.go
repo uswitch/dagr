@@ -2,7 +2,6 @@ package program
 
 import (
 	"bufio"
-	"filepath"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
