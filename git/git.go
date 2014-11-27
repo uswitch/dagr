@@ -17,7 +17,9 @@ func Clone(repo, workingDir string) error {
 }
 
 func Pull(workingDir string) error {
-	return exec.Command("git", "-C", workingDir, "pull").Run()
+	cmd := exec.Command("git", "pull")
+	cmd.Dir = workingDir
+	return cmd.Run()
 }
 
 func MasterSha(repo string) (string, error) {
