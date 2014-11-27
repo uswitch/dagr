@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/program"
@@ -19,7 +20,8 @@ type executionStatus struct {
 }
 
 type executionPageState struct {
-	Execution *program.Execution
+	*executionStatus
+	ProgramExecutionsSocketPath string
 }
 
 func handleExecutionInfo(app app.App, showTemplate *template.Template) http.HandlerFunc {
@@ -30,9 +32,13 @@ func handleExecutionInfo(app app.App, showTemplate *template.Template) http.Hand
 		if execution == nil {
 			log.Println("no such execution:", executionId)
 			http.NotFound(w, req)
-		} else if err := showTemplate.Execute(w, executionPageState{execution}); err != nil {
-			log.Println("error when executing execution info template:", err)
-			http.Error(w, err.Error(), 500)
+		} else {
+			programExecutionsSocketPath := fmt.Sprintf("/program/%s/executions", execution.Program.Name)
+
+			if err := showTemplate.Execute(w, executionPageState{newExecutionStatus(execution), programExecutionsSocketPath}); err != nil {
+				log.Println("error when executing execution info template:", err)
+				http.Error(w, err.Error(), 500)
+			}
 		}
 	}
 }

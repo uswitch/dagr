@@ -102,12 +102,12 @@ func (e *Execution) CatchUp(conn *websocket.Conn, countSoFar int) int {
 }
 
 func (e *Execution) Subscribe(c *websocket.Conn) {
-	log.Println("adding subscriber")
+	ExecutionLog(e, "adding subscriber")
 	e.subscribers[c] = true
 }
 
 func (e *Execution) Unsubscribe(c *websocket.Conn) {
-	log.Println("removing subscriber")
+	ExecutionLog(e, "removing subscriber")
 	delete(e.subscribers, c)
 }
 
@@ -116,7 +116,7 @@ func (e *Execution) broadcast(msg *executionMessage) {
 	defer e.RUnlock()
 	for conn := range e.subscribers {
 		if err := conn.WriteJSON(msg); err != nil {
-			log.Println("error when sending to websocket", err)
+			ExecutionLog(e, "error when sending to websocket", err)
 		}
 	}
 }

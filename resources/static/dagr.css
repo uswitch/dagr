@@ -18,6 +18,17 @@ body {
     margin: 0;
     display: inline;
 }
+#execution h2 {
+    font-size: 40pt;
+    padding: 0 0 0 5px;
+    margin: 0;
+}
+#execution h3 {
+    font-size: 25pt;
+    padding: 0 0 0 5px;
+    margin: 0;
+}
+
 #succeeded {
     background-color: #dff0d8;
     color: #3c763d;
