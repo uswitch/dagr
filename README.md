@@ -5,7 +5,7 @@ Dagr
 
 Runs programs every day (in Norse mythology, Dagr is day personified).
 
-Dagr monitors a specified git repository for programs (directories that contain a `main` executable) and ensures each of them is executed every day. Program output (`stderr` and `stdout` are captured and showed on a monitoring page). A program's exit code can be used to signal to Dagr whether a program succeeded (`0`) or failed (`2`), or whether it should be retried after a delay (`1`).
+Dagr monitors a specified git repository for programs (directories that contain a `main` executable) and ensures each of them is executed every day. Program output (`stderr` and `stdout` are captured and showed on a monitoring page). A program's exit code can be used to signal to Dagr whether a program succeeded (`0`) or failed (`2`), or whether it should be retried after a delay (`1`). For examples please see our [sample programs repository](https://github.com/uswitch/dagr-sample-programs).
 
 ## Build
 
