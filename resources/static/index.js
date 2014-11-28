@@ -7,7 +7,9 @@ $(function() {
         ws.onmessage = function(e) {
             var data = JSON.parse(e.data);
             $(row).find('td.execution-time a').replaceWith("<a href='/executions/" + data.executionId + "'>" + data.executionTime + "</a>");
-            $(row).find('td.execution-status div').replaceWith("<div class='" + data.executionStatus + "'>" + data.executionStatusLabel + "</div>");
+            
+            $(row).find('td.execution-status').empty();
+            $("<div class='exec-status-label " + data.executionStatus + "'>" + data.executionStatusLabel + "</div>").appendTo($(row).find('td.execution-status'));
             var btn = $(row).find('button.program-run');
             if (data.executionStatus == "running") {
                 btn.addClass("pure-button-disabled");

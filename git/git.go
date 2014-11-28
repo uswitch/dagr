@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // does the given directory contain a '.git' directory?
@@ -34,11 +35,12 @@ func Pull(workingDir string) error {
 }
 
 func MasterSha(repo string) (string, error) {
-	log.Println("checking remote sha for", repo)
-	
+	log.Println("checking remote sha for", repo)	
 	bytes, err := exec.Command("git", "ls-remote", repo, "master").CombinedOutput()
-	log.Println(string(bytes))
+	parts := strings.Split(string(bytes), "\t")
+	sha := parts[0]
 	
+	log.Println("latest remote sha:", sha)
 	if err != nil {
 		return "", err
 	}
