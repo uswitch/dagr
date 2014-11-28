@@ -49,19 +49,19 @@
               <td class="execution-time table-1-3">{{if .Execution}}<a href="/executions/{{.Execution.Id}}">{{.ExecutionTime}}</a>{{else}}<a href="#">Never run</a>{{end}}</td>
               <td class="execution-status">
                 {{if .Succeeded}}
-                <div class="succeeded">
+                <div class="exec-status-label succeeded">
                   Succeeded
                 </div>
                 {{else if .Failed}}
-                <div class="failed">
+                <div class="exec-status-label failed">
                   Failed
                 </div>
                 {{else if .Retryable}}
-                <div class="retryable">
+                <div class="exec-status-label retryable">
                   Retryable
                 </div>
                 {{else if .Running}}
-                <div class="running">
+                <div class="exec-status-label running">
                   Running
                 </div>
                 {{else}}

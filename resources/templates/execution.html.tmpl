@@ -19,26 +19,25 @@
         <a href="/" class="pure-menu-heading">Dagr</a>
       </div>
       
-      <div id="execution" class="pure-g" data-socket-path="{{.ProgramExecutionsSocketPath}}" data-execution-id="{{.Execution.Id}}">
-        <div class="pure-u-5-6">
-          <h3><a href="/program/{{.Execution.Program.Name}}">{{.Execution.Program.Name}}</a></h3>
-          <h2>{{.ExecutionTime}}</h2>
-        </div>
-        <div class="pure-u-1-6 execution-status">
+      <div id="execution" data-socket-path="{{.ProgramExecutionsSocketPath}}" data-execution-id="{{.Execution.Id}}">
+        <div class="pure-u-6-6">
+          <h2><a href="/program/{{.Execution.Program.Name}}">{{.Execution.Program.Name}}</a></h2>
+          <span class="exec-started-time">Started {{.ExecutionTime}}</span>
+
           {{if .Succeeded}}
-          <div class="succeeded">
+          <div class="exec-status-label succeeded">
             Succeeded
           </div>
           {{else if .Failed}}
-          <div class="failed">
+          <div class="exec-status-label failed">
             Failed
           </div>
           {{else if .Retryable}}
-          <div class="retryable">
+          <div class="exec-status-label retryable">
             Retryable
           </div>
           {{else if .Running}}
-          <div class="running">
+          <div class="exec-status-label running">
             Running
           </div>
           {{else}}
