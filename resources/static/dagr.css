@@ -15,12 +15,9 @@ body {
 .content {
   padding: 0 0 0 20px;
 }
-
-.status h2 {
-    font-size: 55pt;
-    padding: 0 0 0 5px;
-    margin: 0;
-    display: inline;
+.status h2.counter {
+  font-size: 55px;
+  margin: 0 0 0 15px;
 }
 
 #succeeded {
@@ -42,7 +39,7 @@ body {
 }
 
 #programs thead, #executions thead {
-    background-color: #D6D6D6;
+    background-color: #f1f3f9;
 }
 
 #execution h2 {

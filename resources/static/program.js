@@ -7,7 +7,7 @@ $(function() {
         var data = JSON.parse(e.data);
         var row = $('tr.execution-status[data-execution-id="' + data.executionId + '"]')[0]
         var timeElement = $("<a href='/executions/" + data.executionId + "'>" + data.executionTime + "</a>")
-        var statusElement = $("<div class='" + data.executionStatus + "'>" + data.executionStatusLabel + "</div>");
+        var statusElement = $("<div class='exec-status-label " + data.executionStatus + "'>" + data.executionStatusLabel + "</div>");
         
         if (row) {
             $(row).find('td.execution-time a').replaceWith(timeElement);
