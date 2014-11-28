@@ -14,12 +14,11 @@ var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Requir
 var programsRepo = kingpin.Flag("repo", "repository containing programs").Short('r').Required().String()
 var workingDir = kingpin.Flag("work", "working directory").Short('w').Required().String()
 var monitorInterval = kingpin.Flag("interval", "interval between checks for new programs").Short('i').Default("10s").Duration()
-
-//var dbFile = kingpin.Flag("db", "sqlite database file").Short('d').Required().String()
+var Revision string
 
 func main() {
 	kingpin.Parse()
-
+	log.Println("dagr", Revision)
 	log.Println("starting application")
 	app, err := app.New(*programsRepo, *workingDir)
 

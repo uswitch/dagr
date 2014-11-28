@@ -1,3 +1,5 @@
+version=`git rev-parse --short HEAD`
+
 all: dagr
 
 deps:
@@ -5,7 +7,7 @@ deps:
 	go get github.com/GeertJohan/go.rice/rice
 
 dagr-dev: *.go
-	go build -o $(GOPATH)/bin/dagr-dev .
+	go build -ldflags "-X main.Revision $(version)" -o $(GOPATH)/bin/dagr-dev .
 
 dagr: dagr-dev resources/templates/*.tmpl resources/static/*.js resources/static/*.css
 	cp $(GOPATH)/bin/dagr-dev $(GOPATH)/bin/dagr
