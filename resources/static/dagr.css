@@ -12,21 +12,15 @@ body {
     height: 100%;
     box-shadow: 0px 0px 25px 11px rgba(50, 50, 50, 0.05);
 }
+.content {
+  padding: 0 0 0 20px;
+}
+
 .status h2 {
     font-size: 55pt;
     padding: 0 0 0 5px;
     margin: 0;
     display: inline;
-}
-#execution h2 {
-    font-size: 40pt;
-    padding: 0 0 0 5px;
-    margin: 0;
-}
-#execution h3 {
-    font-size: 25pt;
-    padding: 0 0 0 5px;
-    margin: 0;
 }
 
 #succeeded {
@@ -49,6 +43,10 @@ body {
 
 #programs thead, #executions thead {
     background-color: #D6D6D6;
+}
+
+#execution h2 {
+  margin: 0 0 5px 0;
 }
 
 #programs td,

@@ -86,7 +86,6 @@ func (e *Executor) Execute(p *program.Program) (*program.Execution, error) {
 }
 
 func (e *Executor) RunExecutorLoop() {
-	log.Println("running executor loop")
 	for er := range e.executionRequests {
 		program.ProgramLog(er.program, "got an execution request")
 		execution, err := e.doExecute(er)

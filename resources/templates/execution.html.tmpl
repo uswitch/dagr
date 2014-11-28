@@ -21,33 +21,37 @@
       
       <div id="execution" data-socket-path="{{.ProgramExecutionsSocketPath}}" data-execution-id="{{.Execution.Id}}">
         <div class="pure-u-6-6">
-          <h2><a href="/program/{{.Execution.Program.Name}}">{{.Execution.Program.Name}}</a></h2>
-          <span class="exec-started-time">Started {{.ExecutionTime}}</span>
+          <div class="content">
+            <h2><a href="/program/{{.Execution.Program.Name}}">{{.Execution.Program.Name}}</a></h2>
+            <span class="exec-started-time">Started {{.ExecutionTime}}</span>
 
-          {{if .Succeeded}}
-          <div class="exec-status-label succeeded">
-            Succeeded
+            {{if .Succeeded}}
+            <div class="exec-status-label succeeded">
+              Succeeded
+            </div>
+            {{else if .Failed}}
+            <div class="exec-status-label failed">
+              Failed
+            </div>
+            {{else if .Retryable}}
+            <div class="exec-status-label retryable">
+              Retryable
+            </div>
+            {{else if .Running}}
+            <div class="exec-status-label running">
+              Running
+            </div>
+            {{else}}
+            {{/* never run */}}
+            {{end}}          
           </div>
-          {{else if .Failed}}
-          <div class="exec-status-label failed">
-            Failed
-          </div>
-          {{else if .Retryable}}
-          <div class="exec-status-label retryable">
-            Retryable
-          </div>
-          {{else if .Running}}
-          <div class="exec-status-label running">
-            Running
-          </div>
-          {{else}}
-          {{/* never run */}}
-          {{end}}          
         </div>
       </div>
 
       <div class="source">
-        <pre><code>{{.Execution.Program.MainSource}}</code></pre>
+        <pre>
+          <code>{{.Execution.Program.MainSource}}</code>
+        </pre>
       </div>
       
       <div id="messages" data-socket-path="/executions/{{.Execution.Id}}/messages/{{.Execution.RecordedMessages|len}}">
