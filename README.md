@@ -16,7 +16,7 @@ should be retried after a delay (`1`). For examples please see our
 
 ### Configuration
 
-If a [toml](http://github.com/toml-lang/toml) file called `dagr.toml`
+If a [TOML](http://github.com/toml-lang/toml) file called `dagr.toml`
 is present in the same directory as main, it is expected to contain a
 line in this format:
 
@@ -31,9 +31,10 @@ e.g.
 
     schedule = "0 */5 * * * *"
 
-would ensure the program would be run every five minutes. If the
-`dagr.toml` file does not exist, the schedule defaults to `@daily`
-(i.e. every day at midnight).
+would ensure the program would be run every five minutes.
+
+If the `dagr.toml` file does not exist, the schedule defaults to
+`@daily` (i.e. every day at midnight).
 
 
 ### Dagr Dashboard
