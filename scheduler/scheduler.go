@@ -44,7 +44,7 @@ func isReady(p *program.Program, instant time.Time) bool {
 
 	lastExecutionEndTime := lastExecution.StartTime.Add(lastExecution.Duration())
 
-	// ready if started before 'instant' and not on the same day as 'instant'
+	// ready if ended before 'instant' and not on the same day as 'instant'
 	return lastExecutionEndTime.Before(instant) && !sameDay(lastExecutionEndTime, instant)
 }
 
