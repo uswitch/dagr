@@ -11,13 +11,11 @@ every day (or at any other frequency expressible in the Cron
 syntax). Program output (`stderr` and `stdout` are captured and showed
 on a monitoring page). A program's exit code can be used to signal to
 Dagr whether a program succeeded (`0`) or failed (`2`), or whether it
-should be retried after a delay (`1`). For examples please see our
-[sample programs repository](https://github.com/uswitch/dagr-sample-programs).
+should be retried after a delay (`1`).
 
 ### Configuration
-
 If a [TOML](http://github.com/toml-lang/toml) file called `dagr.toml`
-is present in the same directory as main, it is expected to contain a
+is present in the same directory as `main`, it is expected to contain a
 line in this format:
 
     schedule = "CRON EXPRESSION"
@@ -36,6 +34,9 @@ would ensure the program would be run every five minutes.
 If the `dagr.toml` file does not exist, the schedule defaults to
 `@daily` (i.e. every day at midnight).
 
+### Examples
+For examples please see our
+[sample programs repository](https://github.com/uswitch/dagr-sample-programs).
 
 ### Dagr Dashboard
 <img src="doc/dashboard.png" alt="Dagr dashboard" width="800px">
