@@ -73,12 +73,19 @@ func (e *Execution) ExitStatus() ExitCode {
 	return e.exitStatus
 }
 
+func coerceExitCode(exitCode int) {
+	if exitCode > 2 {
+		return Failed
+	}
+	return exitCode
+}
+
 func (e *Execution) Finish(exitStatus ExitCode) {
 	e.Lock()
 	defer e.Unlock()
 	e.finished = true
 	e.duration = time.Now().Sub(e.StartTime)
-	e.exitStatus = exitStatus
+	e.exitStatus = coerceExitCode(exitStatus)
 	e.Program.SendExecutionState(e)
 }
 
