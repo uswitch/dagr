@@ -26,6 +26,7 @@ type Program struct {
 	executions  []*Execution
 	messages    chan *programExecutionsMessage
 	subscribers map[*websocket.Conn]bool
+	Config
 	sync.RWMutex
 }
 
@@ -166,11 +167,12 @@ func extractExitCode(err error) (ExitCode, error) {
 	}
 }
 
-func newProgram(name, commandPath, mainSource string) *Program {
+func newProgram(name, commandPath, mainSource string, config *Config) *Program {
 	p := &Program{
 		Name:        name,
 		CommandPath: commandPath,
 		MainSource:  mainSource,
+		Config:      *config,
 		messages:    make(chan *programExecutionsMessage, BUFFER_SIZE),
 		subscribers: make(map[*websocket.Conn]bool),
 	}

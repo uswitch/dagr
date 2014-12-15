@@ -105,7 +105,16 @@ func readDir(dir string) ([]*Program, error) {
 
 			if err == nil {
 				log.Println("program executable:", commandPath)
-				p := newProgram(info.Name(), commandPath, string(mainSource))
+
+				configPath := filepath.Join(dir, info.Name(), "dagr.toml")
+				config, err := readConfig(configPath)
+
+				if err != nil {
+					log.Println("invalid configuration file:", configPath)
+					continue
+				}
+
+				p := newProgram(info.Name(), commandPath, string(mainSource), config)
 				programs = append(programs, p)
 			}
 		}
