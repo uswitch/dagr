@@ -95,8 +95,8 @@ func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 		err := cmd.Wait()
 		if err == nil {
 			execution.SendMessage("ok", "successfully completed")
-			execution.Finish(Success)
-			ch <- Success
+			execution.Finish(SuccessCode)
+			ch <- SuccessCode
 			return
 		}
 
@@ -105,8 +105,8 @@ func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 		if err != nil {
 			log.Println(p.Name, "failed to run", err)
 			execution.SendMessage("fail", fmt.Sprint("failed to run ", err))
-			execution.Finish(Failed)
-			ch <- Failed
+			execution.Finish(FailedCode)
+			ch <- FailedCode
 			return
 		}
 
@@ -126,13 +126,13 @@ func (p *Program) Executions() []*Execution {
 }
 
 func (p *Program) SendExecutionState(e *Execution) {
-	status, label := e.makeStatusStrings()
+	status := e.Status()
 	programExecutionsMessage := &programExecutionsMessage{
 		p.Name,
 		e.Id,
 		e.StartTime.Format("2 Jan 2006 15:04"),
-		status,
-		label,
+		status.name,
+		status.label,
 	}
 	p.messages <- programExecutionsMessage
 }

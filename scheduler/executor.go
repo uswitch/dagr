@@ -60,9 +60,9 @@ func (e *Executor) doExecute(er *executionRequest) (*program.Execution, error) {
 
 func (e *Executor) monitorExecution(pe *program.Execution, ch chan program.ExitCode) {
 	program.ExecutionLog(pe, "monitoring execution")
-	exitStatus := <-ch
-	program.ExecutionLog(pe, "execution completed", exitStatus)
-	if exitStatus == program.Retryable {
+	exitCode := <-ch
+	program.ExecutionLog(pe, "execution completed", exitCode)
+	if exitCode == program.RetryableCode {
 		program.ExecutionLog(pe, "scheduling for retry in 1m")
 		time.Sleep(1 * time.Minute) // FIXME: make configurable
 		_, err := e.Execute(pe.Program)

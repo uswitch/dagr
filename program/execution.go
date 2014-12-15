@@ -8,13 +8,22 @@ import (
 	"time"
 )
 
+type ExitCode int
+
 const (
-	Success   = 0
-	Retryable = 1
-	Failed    = 2
+	SuccessCode   = 0
+	RetryableCode = 1
+	FailedCode    = 2
 )
 
-type ExitCode int
+type Status struct {
+	name, label string
+}
+
+var SuccessStatus = &Status{"succeeded", "Succeeded"}
+var RetryableStatus = &Status{"retryable", "Retryable"}
+var FailedStatus = &Status{"failed", "Failed"}
+var RunningStatus = &Status{"running", "Running"}
 
 type Execution struct {
 	Program          *Program
@@ -24,7 +33,7 @@ type Execution struct {
 	messages         chan *executionMessage
 	finished         bool
 	duration         time.Duration
-	exitStatus       ExitCode
+	exitCode         ExitCode
 	subscribers      map[*websocket.Conn]bool
 	sync.RWMutex
 }
@@ -69,16 +78,16 @@ func (e *Execution) Finished() bool {
 	return e.finished
 }
 
-func (e *Execution) ExitStatus() ExitCode {
-	return e.exitStatus
+func (e *Execution) ExitCode() ExitCode {
+	return e.exitCode
 }
 
-func (e *Execution) Finish(exitStatus ExitCode) {
+func (e *Execution) Finish(exitCode ExitCode) {
 	e.Lock()
 	defer e.Unlock()
 	e.finished = true
 	e.duration = time.Now().Sub(e.StartTime)
-	e.exitStatus = exitStatus
+	e.exitCode = exitCode
 	e.Program.SendExecutionState(e)
 }
 
@@ -121,17 +130,16 @@ func (e *Execution) broadcast(msg *executionMessage) {
 	}
 }
 
-func (e *Execution) makeStatusStrings() (string, string) {
+func (e *Execution) Status() *Status {
 	if e.finished {
-		switch e.exitStatus {
-		case Success:
-			return "succeeded", "Succeeded"
-		case Retryable:
-			return "retryable", "Retryable"
-		case Failed:
-			return "failed", "Failed"
+		switch e.exitCode {
+		case SuccessCode:
+			return SuccessStatus
+		case RetryableCode:
+			return RetryableStatus
+		default:
+			return FailedStatus
 		}
 	}
-
-	return "running", "Running"
+	return RunningStatus
 }

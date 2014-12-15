@@ -31,9 +31,9 @@ func newExecutionStatus(execution *program.Execution) *executionStatus {
 		running = !execution.Finished()
 
 		if !running {
-			succeeded = execution.ExitStatus() == program.Success
-			retryable = execution.ExitStatus() == program.Retryable
-			failed = execution.ExitStatus() == program.Failed
+			succeeded = execution.Status() == program.SuccessStatus
+			retryable = execution.Status() == program.RetryableStatus
+			failed = execution.Status() == program.FailedStatus
 		}
 	}
 
