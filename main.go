@@ -7,7 +7,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
+	//_ "net/http/pprof"
 )
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
