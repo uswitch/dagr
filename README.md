@@ -13,6 +13,11 @@ on a monitoring page). A program's exit code can be used to signal to
 Dagr whether a program succeeded (`0`) or failed (`2`), or whether it
 should be retried after a delay (`1`).
 
+## Running
+
+    $ cd $GOPATH
+    $ ./bin/dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work
+
 ### Configuration
 If a [TOML](http://github.com/toml-lang/toml) file called `dagr.toml`
 is present in the same directory as `main`, it is expected to contain a
@@ -63,8 +68,3 @@ the executable.
     $ go get github.com/uswitch/dagr
     $ make -C src/github.com/uswitch/dagr deps
     $ make -C src/github.com/uswitch/dagr
-
-## Run
-
-    $ cd $GOPATH
-    $ ./bin/dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work
