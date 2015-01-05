@@ -33,7 +33,7 @@ func main() {
 	http.Handle("/", web.DagrHandler(app, rice.MustFindBox("resources/templates")))
 
 	server := &http.Server{
-		Addr: httpAddr.String(),
+		Addr: (*httpAddr).String(),
 	}
 
 	log.Println("dagr listening on", *httpAddr)

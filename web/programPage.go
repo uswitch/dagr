@@ -7,6 +7,7 @@ import (
 	"github.com/uswitch/dagr/program"
 	"log"
 	"net/http"
+	"strconv"
 	"text/template"
 )
 
@@ -26,8 +27,22 @@ func handleProgramInfo(app app.App, infoTemplate *template.Template) http.Handle
 			http.NotFound(w, req)
 		} else {
 			executionStatuses := []*executionStatus{}
-
-			for _, e := range program.Executions() {
+			
+			limit := 10
+			queryLimit := req.URL.Query().Get("limit")
+			if queryLimit != "" {
+				n, err := strconv.ParseInt(queryLimit, 10, 0)
+				if err == nil {
+					limit = int(n)
+				}
+			}
+			
+			lo := 0
+			if len(program.Executions()) > limit {
+				lo = len(program.Executions())-limit
+			}
+			
+			for _, e := range program.Executions()[lo:] {
 				executionStatuses = append(executionStatuses, newExecutionStatus(e))
 			}
 
