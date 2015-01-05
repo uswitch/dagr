@@ -2,7 +2,7 @@ $(function() {
     $.each($("tr.program-status"), function (index, row) {
         var path = $(row).attr("data-socket-path")        
         url = 'ws://' + window.location.host + path;
-        console.log('connecting to:' + url);
+
         var ws = new WebSocket(url);
         ws.onmessage = function(e) {
             var data = JSON.parse(e.data);
@@ -16,7 +16,6 @@ $(function() {
             } else {
                 btn.removeClass("pure-button-disabled");
             }
-            console.log(data)
 
             $('#succeeded h2').text($('td.execution-status div.succeeded').length)
             $('#retryable h2').text($('td.execution-status div.retryable').length)
