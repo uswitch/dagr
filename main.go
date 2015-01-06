@@ -7,7 +7,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v1"
 	"log"
 	"net/http"
-	//_ "net/http/pprof"
+	"os"
+	"os/signal"
 )
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
@@ -18,8 +19,17 @@ var monitorInterval = kingpin.Flag("interval", "interval between checks for new 
 // set during build
 var Revision string
 
+func trapSignal(app app.App, c <-chan os.Signal) {
+	<-c
+	log.Println("shutting down")
+	app.Shutdown()
+	log.Println("finished shutdown, exiting")
+	os.Exit(0)
+}
+
 func main() {
 	kingpin.Parse()
+
 	log.Println("dagr", Revision)
 	log.Println("starting application")
 	app, err := app.New(*programsRepo, *workingDir)
@@ -27,6 +37,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		trapSignal(app, c)
+	}()
 
 	http.Handle("/static/", http.StripPrefix("/static/",
 		http.FileServer(rice.MustFindBox("resources/static").HTTPBox())))

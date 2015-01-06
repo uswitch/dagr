@@ -29,6 +29,17 @@ func NewExecutor() *Executor {
 	}
 }
 
+func (e *Executor) Shutdown() {	
+	log.Println("stopping running executions")
+	for _, execution := range e.recordedExecutions {
+		if execution.IsRunning() {
+			program.ExecutionLog(execution, "starting graceful shutdown")
+			execution.Shutdown()
+		}
+	}
+	log.Println("finished shutdown of all running executions")
+}
+
 func (e *Executor) FindExecution(executionId string) *program.Execution {
 	return e.recordedExecutions[executionId]
 }

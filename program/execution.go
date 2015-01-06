@@ -4,6 +4,8 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/gorilla/websocket"
 	"log"
+	"os"
+	"os/exec"
 	"sync"
 	"time"
 )
@@ -29,6 +31,7 @@ type Execution struct {
 	Program          *Program
 	Id               string
 	StartTime        time.Time
+	cmd              *exec.Cmd
 	recordedMessages []*executionMessage
 	messages         chan *executionMessage
 	finished         bool
@@ -44,11 +47,12 @@ type executionMessage struct {
 	Line        string `json:"line"`
 }
 
-func NewExecution(p *Program) *Execution {
+func NewExecution(p *Program, cmd *exec.Cmd) *Execution {
 	e := &Execution{
 		Program:     p,
 		Id:          uuid.New(),
 		StartTime:   time.Now(),
+		cmd:         cmd,
 		messages:    make(chan *executionMessage, BUFFER_SIZE),
 		subscribers: make(map[*websocket.Conn]bool),
 	}
@@ -59,6 +63,20 @@ func NewExecution(p *Program) *Execution {
 	}()
 
 	return e
+}
+
+// sends a SIGINT to the running process
+func (e *Execution) Shutdown() {
+	ExecutionLog(e, "sending SIGINT")
+	e.cmd.Process.Signal(os.Interrupt)
+	for {
+		if e.IsRunning() {
+			ExecutionLog(e, "waiting for shutdown...")
+			time.Sleep(1 * time.Second)
+		} else {
+			break
+		}
+	}
 }
 
 func (e *Execution) SendMessage(messageType, message string) {
@@ -72,6 +90,10 @@ func (e *Execution) SendMessage(messageType, message string) {
 
 func (e *Execution) RecordedMessages() []*executionMessage {
 	return e.recordedMessages
+}
+
+func (e *Execution) IsRunning() bool {
+	return !e.Finished()
 }
 
 func (e *Execution) Finished() bool {

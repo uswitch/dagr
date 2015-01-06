@@ -74,7 +74,7 @@ func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 		return nil, err
 	}
 
-	execution := NewExecution(p)
+	execution := NewExecution(p, cmd)
 	p.SendExecutionState(execution)
 	messages := execution.messages
 	stdoutFinished := make(chan interface{})
