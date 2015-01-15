@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var startupTime = time.Now()
+
 func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <-chan time.Time, shutdown <-chan bool) {
 	for {
 		select {
@@ -38,8 +40,10 @@ func isReady(p *program.Program, instant time.Time) bool {
 	executions := p.Executions()
 
 	if len(executions) == 0 {
-		// never run, therefore ready
-		return true
+		// if never run:
+		// ready if the program is configured to run immediately on startup
+		// OR if the program should have run since startup
+		return p.Immediate || p.Schedule.Next(startupTime).Before(instant)
 	}
 
 	lastExecution := executions[len(executions)-1]

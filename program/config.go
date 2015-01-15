@@ -7,11 +7,13 @@ import (
 )
 
 type Config struct {
-	Schedule schedule.Schedule
+	Schedule  schedule.Schedule
+	Immediate bool
 }
 
 var defaultConfig = Config{
 	schedule.DefaultSchedule,
+	false,
 }
 
 func readConfig(configPath string) (*Config, error) {
