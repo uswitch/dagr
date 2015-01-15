@@ -24,11 +24,11 @@ func RunScheduleLoop(repository *program.Repository, executor *Executor, ticks <
 	}
 }
 
-func selectExecutablePrograms(programs []*program.Program, instant time.Time) []*program.Program {
+func selectExecutablePrograms(programs []*program.Program, now time.Time) []*program.Program {
 	readyPrograms := []*program.Program{}
 
 	for _, p := range programs {
-		if isReady(p, instant) {
+		if isReady(p, now) {
 			readyPrograms = append(readyPrograms, p)
 		}
 	}
@@ -36,14 +36,14 @@ func selectExecutablePrograms(programs []*program.Program, instant time.Time) []
 	return readyPrograms
 }
 
-func isReady(p *program.Program, instant time.Time) bool {
+func isReady(p *program.Program, now time.Time) bool {
 	executions := p.Executions()
 
 	if len(executions) == 0 {
 		// if never run:
 		// ready if the program is configured to run immediately on startup
 		// OR if the program should have run since startup
-		return p.Immediate || p.Schedule.Next(startupTime).Before(instant)
+		return p.Immediate || p.Schedule.Next(startupTime).Before(now)
 	}
 
 	lastExecution := executions[len(executions)-1]
@@ -53,9 +53,9 @@ func isReady(p *program.Program, instant time.Time) bool {
 		return false
 	}
 
-	// ready if ended before 'instant' and next scheduled execution time before 'instant'
+	// ready if ended before 'now' and next scheduled execution time before 'now'
 
 	lastExecutionEndTime := lastExecution.StartTime.Add(lastExecution.Duration())
 	nextExecutionStartTime := p.Schedule.Next(lastExecutionEndTime)
-	return lastExecutionEndTime.Before(instant) && nextExecutionStartTime.Before(instant)
+	return lastExecutionEndTime.Before(now) && nextExecutionStartTime.Before(now)
 }
