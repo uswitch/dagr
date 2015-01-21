@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -90,6 +91,15 @@ func (e *Execution) SendMessage(messageType, message string) {
 
 func (e *Execution) RecordedMessages() []*executionMessage {
 	return e.recordedMessages
+}
+
+func (e *Execution) LastOutput(messageType string) string {
+	for i := len(e.recordedMessages) - 1; i >= 0; i-- {
+		if e.recordedMessages[i].MessageType == messageType {
+			return strings.TrimSpace(e.recordedMessages[i].Line)
+		}
+	}
+	return ""
 }
 
 func (e *Execution) IsRunning() bool {

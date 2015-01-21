@@ -23,7 +23,7 @@ type indexPageState struct {
 }
 
 func newExecutionStatus(execution *program.Execution) *executionStatus {
-	var executionTime string
+	var executionTime, executionLastOutput string
 	var running, succeeded, retryable, failed bool
 
 	if execution != nil {
@@ -34,16 +34,18 @@ func newExecutionStatus(execution *program.Execution) *executionStatus {
 			succeeded = execution.Status() == program.SuccessStatus
 			retryable = execution.Status() == program.RetryableStatus
 			failed = execution.Status() == program.FailedStatus
+			executionLastOutput = execution.LastOutput("out")
 		}
 	}
 
 	return &executionStatus{
-		Execution:     execution,
-		ExecutionTime: executionTime,
-		Running:       running,
-		Succeeded:     succeeded,
-		Retryable:     retryable,
-		Failed:        failed,
+		Execution:           execution,
+		ExecutionTime:       executionTime,
+		ExecutionLastOutput: executionLastOutput,
+		Running:             running,
+		Succeeded:           succeeded,
+		Retryable:           retryable,
+		Failed:              failed,
 	}
 }
 

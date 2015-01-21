@@ -11,12 +11,13 @@ import (
 )
 
 type executionStatus struct {
-	Execution     *program.Execution
-	ExecutionTime string
-	Running       bool
-	Succeeded     bool
-	Failed        bool
-	Retryable     bool
+	Execution           *program.Execution
+	ExecutionTime       string
+	ExecutionLastOutput string
+	Running             bool
+	Succeeded           bool
+	Failed              bool
+	Retryable           bool
 }
 
 type executionPageState struct {

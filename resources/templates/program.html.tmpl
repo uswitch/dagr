@@ -35,6 +35,7 @@
             <tr>
               <th>Execution</th>
               <th>Status</th>
+              <th>Last output</th>
             </tr>
           </thead>
           
@@ -62,6 +63,9 @@
                 {{else}}
                 {{/* never run? */}}
                 {{end}}               
+              </td>
+              <td class="execution-last-output">
+                <code>{{.ExecutionLastOutput}}</code>
               </td>
             </tr>
             {{end}}

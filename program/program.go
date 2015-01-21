@@ -34,6 +34,7 @@ type programExecutionsMessage struct {
 	ProgramName          string `json:"programName"`
 	ExecutionId          string `json:"executionId"`
 	ExecutionTime        string `json:"executionTime"`
+	ExecutionLastOutput  string `json:"executionLastOutput"`
 	ExecutionStatus      string `json:"executionStatus"`
 	ExecutionStatusLabel string `json:"executionStatusLabel"`
 }
@@ -132,6 +133,7 @@ func (p *Program) SendExecutionState(e *Execution) {
 		p.Name,
 		e.Id,
 		e.StartTime.Format("2 Jan 2006 15:04"),
+		e.LastOutput("out"),
 		status.name,
 		status.label,
 	}
