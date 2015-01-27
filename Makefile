@@ -13,5 +13,7 @@ dagr: dagr-dev
 
 clean:
 	go clean
+	rm -f bin/dagr*
+	rm -rf src/
 
 .PHONY: all clean deps
