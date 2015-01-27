@@ -16,7 +16,7 @@ whether it should be retried after a delay (`1`).
 ## Running
 
     $ cd $GOPATH
-    $ ./bin/dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work
+    $ ./bin/dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work --ui ./ui
 
 ### Configuration
 
@@ -85,8 +85,7 @@ The execution page allows you to view `stderr` and `stdout` for a program- the s
 * Git
 
 Dagr contains packages which are specified as `github.com/uswitch/dagr/foo` etc. When developing its helpful to ensure
-you pull the code using `go get` and build using the provided `Makefile` to ensure the web resources are zipped into
-the executable.
+you pull the code using `go get` and build using the provided `Makefile`.
 
     $ export PATH=$GOPATH/bin:$PATH
     $ cd $GOPATH

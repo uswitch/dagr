@@ -1,14 +1,14 @@
 package web
 
 import (
-	"github.com/GeertJohan/go.rice"
 	"github.com/gorilla/mux"
 	"github.com/uswitch/dagr/app"
 	"net/http"
+	"path/filepath"
 	"text/template"
 )
 
-func DagrHandler(app app.App, templates *rice.Box) http.Handler {
+func DagrHandler(app app.App, templates string) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex(app, loadTemplate(templates, "index.html.tmpl"))).Methods("GET")
 	r.HandleFunc("/program/{program}", handleProgramInfo(app, loadTemplate(templates, "program.html.tmpl"))).Methods("GET")
@@ -20,10 +20,6 @@ func DagrHandler(app app.App, templates *rice.Box) http.Handler {
 	return r
 }
 
-func loadTemplate(templates *rice.Box, path string) *template.Template {
-	templateString, err := templates.String(path)
-	if err != nil {
-		panic(err)
-	}
-	return template.Must(template.New(path).Parse(templateString))
+func loadTemplate(path, filename string) *template.Template {
+	return template.Must(template.ParseFiles(filepath.Join(path, filename)))
 }

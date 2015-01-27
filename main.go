@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/GeertJohan/go.rice"
 	"github.com/uswitch/dagr/app"
 	"github.com/uswitch/dagr/web"
 	"gopkg.in/alecthomas/kingpin.v1"
@@ -9,11 +8,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 )
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
 var programsRepo = kingpin.Flag("repo", "repository containing programs").Short('r').Required().String()
 var workingDir = kingpin.Flag("work", "working directory").Short('w').Required().String()
+var uiDir = kingpin.Flag("ui", "ui directory containing templates, js, css etc").Short('u').Required().String()
 var monitorInterval = kingpin.Flag("interval", "interval between checks for new programs").Short('i').Default("10s").Duration()
 
 // set during build
@@ -44,9 +45,8 @@ func main() {
 		trapSignal(app, c)
 	}()
 
-	http.Handle("/static/", http.StripPrefix("/static/",
-		http.FileServer(rice.MustFindBox("resources/static").HTTPBox())))
-	http.Handle("/", web.DagrHandler(app, rice.MustFindBox("resources/templates")))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(*uiDir, "static")))))
+	http.Handle("/", web.DagrHandler(app, filepath.Join(*uiDir, "templates")))
 
 	server := &http.Server{
 		Addr: (*httpAddr).String(),
