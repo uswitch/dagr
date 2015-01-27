@@ -170,7 +170,7 @@ func extractExitCode(err error) (ExitCode, error) {
 }
 
 func newProgram(name, commandPath, mainSource string, config *Config) *Program {
-	p := &Program{
+	return &Program{
 		Name:        name,
 		CommandPath: commandPath,
 		MainSource:  mainSource,
@@ -178,13 +178,19 @@ func newProgram(name, commandPath, mainSource string, config *Config) *Program {
 		messages:    make(chan *programExecutionsMessage, BUFFER_SIZE),
 		subscribers: make(map[*websocket.Conn]bool),
 	}
+}
+
+func startBroadcasting(program *Program) {
 	go func() {
-		for msg := range p.messages {
-			p.broadcast(msg)
+		for msg := range program.messages {
+			program.broadcast(msg)
 		}
 	}()
+}
 
-	return p
+func update(existingProgram, newProgram *Program) {
+	existingProgram.MainSource = newProgram.MainSource
+	existingProgram.Config = newProgram.Config
 }
 
 func ProgramLog(p *Program, args ...interface{}) {

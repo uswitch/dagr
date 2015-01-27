@@ -75,10 +75,22 @@ func (r *Repository) refresh() error {
 		return err
 	}
 
-	programs, err := readDir(r.workingDir)
+	newPrograms, err := readDir(r.workingDir)
 
 	if err != nil {
 		return err
+	}
+
+	programs := []*Program{}
+
+	for _, newProgram := range newPrograms {
+		if existingProgram := r.FindProgram(newProgram.Name); existingProgram != nil {
+			update(existingProgram, newProgram)
+			programs = append(programs, existingProgram)
+		} else {
+			startBroadcasting(newProgram)
+			programs = append(programs, newProgram)
+		}
 	}
 
 	r.programs = programs
