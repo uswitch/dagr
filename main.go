@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 )
 
 var httpAddr = kingpin.Flag("http", "serve http on host:port").Short('a').Required().TCP()
@@ -16,6 +18,7 @@ var programsRepo = kingpin.Flag("repo", "repository containing programs").Short(
 var workingDir = kingpin.Flag("work", "working directory").Short('w').Required().String()
 var uiDir = kingpin.Flag("ui", "ui directory containing templates, js, css etc").Short('u').Required().String()
 var monitorInterval = kingpin.Flag("interval", "interval between checks for new programs").Short('i').Default("10s").Duration()
+var concurrentExecutions = kingpin.Flag("executions", "number of concurrent executions").Short('e').Default(strconv.Itoa(runtime.NumCPU())).Int()
 
 // set during build
 var Revision string
@@ -33,7 +36,7 @@ func main() {
 
 	log.Println("dagr", Revision)
 	log.Println("starting application")
-	app, err := app.New(*programsRepo, *workingDir)
+	app, err := app.New(*programsRepo, *workingDir, *concurrentExecutions)
 
 	if err != nil {
 		log.Fatal(err)

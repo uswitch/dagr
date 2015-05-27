@@ -15,6 +15,10 @@ type programStatus struct {
 	ProgramExecutionsSocketPath string
 }
 
+func (s *programStatus) Runnable() bool {
+	return !s.Running && !s.Waiting
+}
+
 type indexPageState struct {
 	Succeeded       int
 	Retryable       int
@@ -24,16 +28,17 @@ type indexPageState struct {
 
 func newExecutionStatus(execution *program.Execution) *executionStatus {
 	var executionTime, executionLastOutput string
-	var running, succeeded, retryable, failed bool
+	var running, succeeded, retryable, failed, waiting bool
 
 	if execution != nil {
 		executionTime = execution.StartTime.Format("2 Jan 2006 15:04")
-		running = !execution.Finished()
+		running = execution.IsRunning()
 
 		if !running {
 			succeeded = execution.Status() == program.SuccessStatus
 			retryable = execution.Status() == program.RetryableStatus
 			failed = execution.Status() == program.FailedStatus
+			waiting = execution.Status() == program.WaitingStatus
 			executionLastOutput = execution.LastOutput("out")
 		}
 	}
@@ -46,6 +51,7 @@ func newExecutionStatus(execution *program.Execution) *executionStatus {
 		Succeeded:           succeeded,
 		Retryable:           retryable,
 		Failed:              failed,
+		Waiting:             waiting,
 	}
 }
 

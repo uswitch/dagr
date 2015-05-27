@@ -27,6 +27,7 @@ var SuccessStatus = &Status{"succeeded", "Succeeded"}
 var RetryableStatus = &Status{"retryable", "Retryable"}
 var FailedStatus = &Status{"failed", "Failed"}
 var RunningStatus = &Status{"running", "Running"}
+var WaitingStatus = &Status{"waiting", "Waiting"}
 
 type Execution struct {
 	Program          *Program
@@ -35,6 +36,7 @@ type Execution struct {
 	cmd              *exec.Cmd
 	recordedMessages []*executionMessage
 	messages         chan *executionMessage
+	started          bool
 	finished         bool
 	duration         time.Duration
 	exitCode         ExitCode
@@ -68,6 +70,10 @@ func NewExecution(p *Program, cmd *exec.Cmd) *Execution {
 
 // sends a SIGINT to the running process
 func (e *Execution) Shutdown() {
+	if !e.IsRunning() {
+		return
+	}
+
 	ExecutionLog(e, "sending SIGINT")
 	e.cmd.Process.Signal(os.Interrupt)
 	for {
@@ -103,7 +109,7 @@ func (e *Execution) LastOutput(messageType string) string {
 }
 
 func (e *Execution) IsRunning() bool {
-	return !e.Finished()
+	return e.started && !e.finished
 }
 
 func (e *Execution) Finished() bool {
@@ -112,6 +118,12 @@ func (e *Execution) Finished() bool {
 
 func (e *Execution) ExitCode() ExitCode {
 	return e.exitCode
+}
+
+func (e *Execution) Started() {
+	e.Lock()
+	defer e.Unlock()
+	e.started = true
 }
 
 func (e *Execution) Finish(exitCode ExitCode) {
@@ -173,5 +185,10 @@ func (e *Execution) Status() *Status {
 			return FailedStatus
 		}
 	}
-	return RunningStatus
+	
+	if e.IsRunning() {
+		return RunningStatus
+	}
+
+	return WaitingStatus
 }

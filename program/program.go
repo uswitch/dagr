@@ -53,11 +53,12 @@ func forwardOutput(execution *Execution, messageType string, r io.Reader, finish
 	finished <- struct{}{}
 }
 
-func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
+func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, error) {
 	p.Lock()
 	defer p.Unlock()
 
 	ProgramLog(p, "executing command")
+
 	cmd := exec.Command(p.CommandPath)
 	cmd.Dir = filepath.Dir(p.CommandPath)
 	stdout, err := cmd.StdoutPipe()
@@ -70,21 +71,28 @@ func (p *Program) Execute(ch chan ExitCode) (*Execution, error) {
 		return nil, err
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-
 	execution := NewExecution(p, cmd)
 	p.SendExecutionState(execution)
 	messages := execution.messages
 	stdoutFinished := make(chan interface{})
 	stderrFinished := make(chan interface{})
-
+	
 	go forwardOutput(execution, "out", stdout, stdoutFinished)
 	go forwardOutput(execution, "err", stderr, stderrFinished)
 
 	go func() {
+		ExecutionLog(execution, "waiting for execution start signal")
+		<- startCh
+		
+		err = cmd.Start()
+		if err != nil {
+			execution.SendMessage("fail", fmt.Sprintf("failed to start: %s", err.Error()))
+			execution.Finish(FailedCode)
+			ch <- FailedCode
+			return
+		}
+		execution.Started()
+
 		defer close(messages)
 		defer close(stdoutFinished)
 		defer close(stderrFinished)

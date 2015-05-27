@@ -9,6 +9,7 @@ import (
 type Executor struct {
 	executionRequests  chan *executionRequest
 	recordedExecutions map[string]*program.Execution
+	executionSlotAvailable chan bool
 }
 
 type executionResponse struct {
@@ -22,10 +23,18 @@ type executionRequest struct {
 	responseCh chan *executionResponse
 }
 
-func NewExecutor() *Executor {
+func NewExecutor(concurrentExecutions int) *Executor {
+	slotCh := make(chan bool)
+	go func() {
+		for i := 0; i < concurrentExecutions; i++ {
+			slotCh <- true
+		}
+	}()
+	
 	return &Executor{
-		executionRequests:  make(chan *executionRequest),
-		recordedExecutions: make(map[string]*program.Execution),
+		executionRequests:      make(chan *executionRequest, 100),
+		recordedExecutions:     make(map[string]*program.Execution),
+		executionSlotAvailable: slotCh,
 	}
 }
 
@@ -48,7 +57,7 @@ func (e *Executor) doExecute(er *executionRequest) (*program.Execution, error) {
 	program.ProgramLog(er.program, "executing")
 
 	exitCh := make(chan program.ExitCode)
-	execution, err := er.program.Execute(exitCh)
+	execution, err := er.program.Execute(e.executionSlotAvailable, exitCh)
 
 	if err != nil {
 		if execution != nil {
@@ -71,7 +80,10 @@ func (e *Executor) doExecute(er *executionRequest) (*program.Execution, error) {
 
 func (e *Executor) monitorExecution(pe *program.Execution, ch chan program.ExitCode) {
 	program.ExecutionLog(pe, "monitoring execution")
+	
 	exitCode := <-ch
+	e.slotAvailable()
+	
 	program.ExecutionLog(pe, "execution completed", exitCode)
 	if exitCode == program.RetryableCode {
 		program.ExecutionLog(pe, "scheduling for retry in 1m")
@@ -96,9 +108,14 @@ func (e *Executor) Execute(p *program.Program) (*program.Execution, error) {
 	return response.execution, response.err
 }
 
+func (e *Executor) slotAvailable() {
+	go func() { e.executionSlotAvailable <- true }()
+}
+
 func (e *Executor) RunExecutorLoop() {
 	for er := range e.executionRequests {
 		program.ProgramLog(er.program, "got an execution request")
+		
 		execution, err := e.doExecute(er)
 		if err == nil {
 			e.recordedExecutions[execution.Id] = execution

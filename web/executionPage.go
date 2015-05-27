@@ -18,6 +18,7 @@ type executionStatus struct {
 	Succeeded           bool
 	Failed              bool
 	Retryable           bool
+	Waiting             bool
 }
 
 type executionPageState struct {

@@ -48,9 +48,9 @@ func (a *appState) Shutdown() {
 	log.Println("finished application shutdown")
 }
 
-func New(repo, workingDir string) (*appState, error) {
+func New(repo, workingDir string, concurrentExecutions int) (*appState, error) {
 	log.Println("starting executor")
-	executor := scheduler.NewExecutor()
+	executor := scheduler.NewExecutor(concurrentExecutions)
 	log.Println("initialising programs repository")
 	repository, err := program.NewRepository(repo, workingDir)
 

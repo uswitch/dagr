@@ -60,6 +60,10 @@
                 <div class="exec-status-label retryable">
                   Retryable
                 </div>
+                {{else if .Waiting}}
+                <div class="exec-status-label waiting">
+                  Waiting
+                </div>
                 {{else if .Running}}
                 <div class="exec-status-label running">
                   Running
@@ -70,7 +74,7 @@
               </td>
               <td>
                 <form action="/program/{{.Program.Name}}/execute" method="post">
-                  <button class="program-run pure-button pure-button-primary {{if .Running}}pure-button-disabled{{end}}">Run</button>
+                  <button class="program-run pure-button pure-button-primary {{if not .Runnable}}pure-button-disabled{{end}}">Run</button>
                 </form>
               </td>
             </tr>

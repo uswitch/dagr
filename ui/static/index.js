@@ -11,7 +11,7 @@ $(function() {
             $(row).find('td.execution-status').empty();
             $("<div class='exec-status-label " + data.executionStatus + "'>" + data.executionStatusLabel + "</div>").appendTo($(row).find('td.execution-status'));
             var btn = $(row).find('button.program-run');
-            if (data.executionStatus == "running") {
+            if (data.executionStatus == "running" || data.executionStatus == "waiting") {
                 btn.addClass("pure-button-disabled");
             } else {
                 btn.removeClass("pure-button-disabled");
