@@ -1,0 +1,5 @@
+dagr:
+  build: .
+  ports:
+    - "8080:8080"
+  command: dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work --ui ./ui
