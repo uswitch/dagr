@@ -92,3 +92,17 @@ you pull the code using `go get` and build using the provided `Makefile`.
     $ go get github.com/uswitch/dagr
     $ make -C src/github.com/uswitch/dagr deps
     $ make -C src/github.com/uswitch/dagr
+
+### Docker
+
+The Dockerfile requires that a RSA key be present that has read-only access to the github repo to be watched. 
+The file should be named `id_rsa` and be copied into the same folder as the Dockerfile.
+
+The entrypoint to the Dockerfile is provided such that only the github repository flag is required as the command parameter when run.
+
+Usage:
+
+```bash
+docker-compose build
+docker-compose run dagr --repo git@github.com:uswitch/dagr-sample-programs
+```
