@@ -107,5 +107,5 @@ docker-compose build
 
 #example usage
 docker-compose ps
-docker-compose run dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work --ui ./u
+docker-compose run dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work --ui ./ui
 ```
