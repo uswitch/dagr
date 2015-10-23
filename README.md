@@ -98,11 +98,14 @@ you pull the code using `go get` and build using the provided `Makefile`.
 The Dockerfile requires that a RSA key be present that has read-only access to the github repo to be watched. 
 The file should be named `id_rsa` and be copied into the same folder as the Dockerfile.
 
-The entrypoint to the Dockerfile is provided such that only the github repository flag is required as the command parameter when run.
+The command passed to the container would be the same as you would run from the command line.
 
 Usage:
 
 ```bash
 docker-compose build
-docker-compose run dagr --repo git@github.com:uswitch/dagr-sample-programs
+
+#example usage
+docker-compose ps
+docker-compose run dagr --http :8080 --repo git@github.com:uswitch/dagr-sample-programs --work /tmp/dagr-work --ui ./u
 ```
