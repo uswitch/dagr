@@ -73,6 +73,7 @@ func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, 
 
 	execution := NewExecution(p, cmd)
 	cmd.Env = append(cmd.Env, "DAGR_EXECUTION_ID="+execution.Id)
+	cmd.Env = append(cmd.Env, "DAGR_EXECUTION_URI=/executions/"+execution.Id)
 
 	p.SendExecutionState(execution)
 	messages := execution.messages
