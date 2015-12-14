@@ -72,18 +72,20 @@ func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, 
 	}
 
 	execution := NewExecution(p, cmd)
+	cmd.Env = append(cmd.Env, "DAGR_EXECUTION_ID="+execution.Id)
+
 	p.SendExecutionState(execution)
 	messages := execution.messages
 	stdoutFinished := make(chan interface{})
 	stderrFinished := make(chan interface{})
-	
+
 	go forwardOutput(execution, "out", stdout, stdoutFinished)
 	go forwardOutput(execution, "err", stderr, stderrFinished)
 
 	go func() {
 		ExecutionLog(execution, "waiting for execution start signal")
-		<- startCh
-		
+		<-startCh
+
 		err = cmd.Start()
 		if err != nil {
 			execution.SendMessage("fail", fmt.Sprintf("failed to start: %s", err.Error()))
