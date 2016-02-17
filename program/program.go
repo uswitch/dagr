@@ -63,9 +63,6 @@ func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, 
 	cmd := exec.Command("bash", p.CommandPath)
 	cmd.Dir = filepath.Dir(p.CommandPath)
 	cmd.Env = os.Environ()
-	fmt.Println("Os ENv")
-	fmt.Println(os.Environ())
-	fmt.Println(cmd.Env)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -81,9 +78,6 @@ func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, 
 	cmd.Env = append(cmd.Env, "DAGR_EXECUTION_ID="+execution.Id)
 	cmd.Env = append(cmd.Env, "DAGR_EXECUTION_URI=/executions/"+execution.Id)
 
-	fmt.Println("cmd.Env")
-	fmt.Println(cmd.Env)
-	
 	p.SendExecutionState(execution)
 	messages := execution.messages
 	stdoutFinished := make(chan interface{})
