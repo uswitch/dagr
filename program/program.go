@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -61,6 +62,8 @@ func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, 
 
 	cmd := exec.Command(p.CommandPath)
 	cmd.Dir = filepath.Dir(p.CommandPath)
+	cmd.Env = os.Environ()
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
