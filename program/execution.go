@@ -1,7 +1,7 @@
 package program
 
 import (
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/pborman/uuid"
 	"github.com/gorilla/websocket"
 	"log"
 	"os"
@@ -185,7 +185,7 @@ func (e *Execution) Status() *Status {
 			return FailedStatus
 		}
 	}
-	
+
 	if e.IsRunning() {
 		return RunningStatus
 	}
