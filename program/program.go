@@ -59,7 +59,7 @@ func (p *Program) Execute(startCh <-chan bool, ch chan<- ExitCode) (*Execution, 
 	defer p.Unlock()
 
 	ProgramLog(p, "executing command")
-	cmd := exec.Command("bash", p.CommandPath)
+	cmd := exec.Command(p.CommandPath)
 	cmd.Dir = filepath.Dir(p.CommandPath)
 	cmd.Env = os.Environ()
 	ProgramLog(p, fmt.Sprintf("environment: %s", os.Environ()))
