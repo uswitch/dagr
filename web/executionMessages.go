@@ -20,7 +20,7 @@ func programExecutions(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		conn, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.Println(fmt.Errorf("cannot upgrade to websocket: %v", err))
+			log.Println(fmt.Errorf("Can not upgrade to websocket: %v", err))
 			return
 		}
 		vars := mux.Vars(req)
@@ -42,7 +42,7 @@ func handleExecutionMessages(app app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		conn, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.Println(fmt.Errorf("cannot upgrade to websocket: %v", err))
+			log.Println(fmt.Errorf("Can not upgrade to websocket: %v", err))
 			return
 		}
 		vars := mux.Vars(req)
