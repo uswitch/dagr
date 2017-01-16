@@ -61,6 +61,11 @@ i.e.
 In any other case, the program will *not* be run immediately (i.e. it
 will run at scheduled times only)
 
+#### Notify slack about job failures
+
+Optional feature switched off by default. Can be configured with environment variables. To switch on set `DAGR_SLACK_WEBHOOK_URL` and `DAGR_SLACK_ALERTS_ROOM` to point to the slack incoming webhook and the slack room to be alerted. By default Dagr will notify the slack room for every failed job both with exit code 1 (retryable) or 2. By setting `DAGR_SLACK_SILENCE_RETRYABLE` slack will be only notifed if a job fails with exit code 2. The appearance of the message can be configured via setting `DAGR_SLACK_USER_NAME` (defaults to `Dagr`), `DAGR_SLACK_ICON_EMOJI` (defaults to `:exclamation:`) and `DAGR_SLACK_ICON_URL` (no default).
+
+Naturally individual jobs can have their own warning logic, this is for an easy option to get basic monitoring on jobs for cheap.
 
 ### Examples
 For examples please see our
@@ -95,7 +100,7 @@ you pull the code using `go get` and build using the provided `Makefile`.
 
 ### Docker
 
-The Dockerfile requires that a RSA key be present that has read-only access to the github repo to be watched. 
+The Dockerfile requires that a RSA key be present that has read-only access to the github repo to be watched.
 The file should be named `id_rsa` and be copied into the same folder as the Dockerfile.
 
 The command passed to the container would be the same as you would run from the command line.
