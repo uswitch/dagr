@@ -6,7 +6,7 @@ deps:
 	go get -d -v
 
 dagr-dev: *.go
-	go build -ldflags "-X main.Revision $(version)" -o $(GOPATH)/bin/dagr-dev .
+	go build -ldflags "-X main.Revision=$(version)" -o $(GOPATH)/bin/dagr-dev .
 
 dagr: dagr-dev
 	cp $(GOPATH)/bin/dagr-dev $(GOPATH)/bin/dagr

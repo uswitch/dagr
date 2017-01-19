@@ -4,6 +4,11 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/gorilla/websocket"
 	"log"
+	"errors"
+	"fmt"
+	"net/http"
+	"bytes"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
@@ -28,6 +33,25 @@ var RetryableStatus = &Status{"retryable", "Retryable"}
 var FailedStatus = &Status{"failed", "Failed"}
 var RunningStatus = &Status{"running", "Running"}
 var WaitingStatus = &Status{"waiting", "Waiting"}
+var slackWebhookUrl = os.Getenv("DAGR_SLACK_WEBHOOK_URL")
+var slackAlertsRoom = os.Getenv("DAGR_SLACK_ALERTS_ROOM")
+var slackSilenceRetryable = os.Getenv("DAGR_SLACK_SILENCE_RETRYABLE")
+var slackUserName = os.Getenv("DAGR_SLACK_USER_NAME")
+var slackIconEmoji = os.Getenv("DAGR_SLACK_ICON_EMOJI")
+var slackIconUrl = os.Getenv("DAGR_SLACK_ICON_URL")
+var slackNoWarnLevel = SuccessCode
+
+func init() {
+	if slackIconEmoji == "" {
+		slackIconEmoji = ":exclamation:"
+	}
+	if slackUserName == "" {
+		slackUserName = "Dagr"
+	}
+	if slackSilenceRetryable != "" {
+		slackNoWarnLevel = RetryableCode
+	}
+}
 
 type Execution struct {
 	Program          *Program
@@ -48,6 +72,14 @@ type executionMessage struct {
 	ProgramName string `json:"programName"`
 	MessageType string `json:"messageType"`
 	Line        string `json:"line"`
+}
+
+type slackMessage struct {
+	Text        string        `json:"text"`
+	Channel     string        `json:"channel,omitempty"`
+	UserName    string        `json:"username,omitempty"`
+	IconURL     string        `json:"icon_url,omitempty"`
+	IconEmoji   string        `json:"icon_emoji,omitempty"`
 }
 
 func NewExecution(p *Program, cmd *exec.Cmd) *Execution {
@@ -126,12 +158,35 @@ func (e *Execution) Started() {
 	e.started = true
 }
 
+func (e *Execution) slackWarningMaybe() error {
+	if slackWebhookUrl != "" && slackAlertsRoom != "" && int(e.exitCode) > slackNoWarnLevel {
+		msgText := fmt.Sprintf("`%s` exited with %s.\nLast output:\n```\n%s\n```", e.Program.Name, e.Status().label, e.LastOutput("out"))
+		msg := &slackMessage{msgText, slackAlertsRoom, slackUserName, slackIconUrl, slackIconEmoji}
+		buf, err := json.Marshal(msg)
+		if err != nil {
+			return err
+		}
+		resp, err := http.Post(slackWebhookUrl, "application/json", bytes.NewReader(buf))
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != 200 {
+			errors.New(fmt.Sprintf("unexpected status code: %d", resp.StatusCode))
+		}
+	}
+	return nil
+}
+
 func (e *Execution) Finish(exitCode ExitCode) {
 	e.Lock()
 	defer e.Unlock()
 	e.finished = true
 	e.duration = time.Now().Sub(e.StartTime)
 	e.exitCode = exitCode
+	err := e.slackWarningMaybe()
+	if err != nil {
+		log.Println("error when sending warning to slack", err)
+	}
 	e.Program.SendExecutionState(e)
 }
 
