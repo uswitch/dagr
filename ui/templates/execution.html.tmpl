@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-nr-min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.5.0/pure-nr-min.css">
     <link rel="stylesheet" href="/static/dagr.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
     <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
@@ -11,14 +11,14 @@
     <title>Dagr: {{.Execution.Program.Name}}: {{.ExecutionTime}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
-  
+
   <body>
     <div id="container">
-      <!-- header --> 
+      <!-- header -->
       <div class="pure-menu pure-menu-open pure-menu-horizontal">
         <a href="/" class="pure-menu-heading">Dagr</a>
       </div>
-      
+
       <div id="execution" data-socket-path="{{.ProgramExecutionsSocketPath}}" data-execution-id="{{.Execution.Id}}">
         <div class="pure-u-6-6">
           <div class="content">
@@ -43,7 +43,7 @@
             </div>
             {{else}}
             {{/* never run */}}
-            {{end}}          
+            {{end}}
           </div>
         </div>
       </div>
@@ -53,7 +53,7 @@
           <code>{{.Execution.Program.MainSource}}</code>
         </pre>
       </div>
-      
+
       <div id="messages" data-socket-path="/executions/{{.Execution.Id}}/messages/{{.Execution.RecordedMessages|len}}">
         <pre>{{range .Execution.RecordedMessages}}<span class="{{.MessageType}}">{{.Line}}</span>{{ end }}</pre>
       </div>

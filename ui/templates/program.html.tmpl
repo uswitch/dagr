@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-nr-min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.5.0/pure-nr-min.css">
     <link rel="stylesheet" href="/static/dagr.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css">
     <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
@@ -11,14 +11,14 @@
     <title>Dagr: {{.Program.Name}}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
-  
+
   <body>
     <div id="container">
-      <!-- header --> 
+      <!-- header -->
       <div class="pure-menu pure-menu-open pure-menu-horizontal">
         <a href="/" class="pure-menu-heading">Dagr</a>
       </div>
-      
+
       <div class="status pure-g">
         <div class="content pure-u-1-1">
           <h2>{{.Program.Name}}</h2>
@@ -38,7 +38,7 @@
               <th>Last output</th>
             </tr>
           </thead>
-          
+
           <tbody>
             {{range .ExecutionStatuses}}
             <tr class="execution-status" data-execution-id="{{.Execution.Id}}">
@@ -66,7 +66,7 @@
                 </div>
                 {{else}}
                 {{/* never run? */}}
-                {{end}}               
+                {{end}}
               </td>
               <td class="execution-last-output">
                 <code>{{.ExecutionLastOutput}}</code>
